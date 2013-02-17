@@ -32,22 +32,32 @@ public class QEstimator {
 		this.learningRate = hiddenLayers;		
 		this.momentum = hiddenLayers;	
 		this.outputLayer = 1 + this.hiddenLayers;
+		
+		this.sizes = new int[this.outputLayer + 1];
+		this.outputs = new double[this.outputLayer + 1][];
+		this.biases = new double[this.outputLayer + 1][];
+		this.deltas = new double[this.outputLayer + 1][];
+		this.errors = new double[this.outputLayer + 1][];
+		this.weights = new double[this.outputLayer][][];
+		this.changes = new double[this.outputLayer][][];
 		for (int layer = 0; layer <= this.outputLayer; layer++) {
 			if (layer == this.outputLayer) {
 				this.outputs[layer] = zeros(this.numberOfOutputs);
 				this.biases[layer] = rands(this.numberOfOutputs);
 				this.deltas[layer] = zeros(this.numberOfOutputs);
 				this.errors[layer] = zeros(this.numberOfOutputs);
-				this.sizes[layer] = this.numberOfOutputs;
+				this.sizes[layer] = this.numberOfOutputs;	
 			} else {				
 				this.outputs[layer] = zeros(this.numberOfInputs);
 				this.biases[layer] = rands(this.numberOfInputs);
 				this.deltas[layer] = zeros(this.numberOfInputs);
 				this.errors[layer] = zeros(this.numberOfInputs);
-				this.sizes[layer] = this.numberOfInputs;				
+				this.sizes[layer] = this.numberOfInputs;					
+				this.weights[layer] = new double[this.numberOfInputs][];
+				this.changes[layer] = new double[this.numberOfInputs][];		
 			}
 		}
-		for (int layer = 0; layer <= this.outputLayer; layer++) {
+		for (int layer = 0; layer < this.outputLayer; layer++) {
 			for (int node = 0; node < this.sizes[layer]; node++) {
 				this.weights[layer][node] = rands(this.sizes[layer + 1]);				
 				this.changes[layer][node] = rands(this.sizes[layer + 1]);				
@@ -66,20 +76,29 @@ public class QEstimator {
 		calculateDeltas(output);
 		adjustWeights();
 	}
+	
+	public void train(DataPoint[] data) {
+		for (int i = 0; i < 20000; i++) {
+			for (int j = 0; j < data.length; j++) {
+				addDataPoint(data[j].input, data[j].output);
+			}
+		}
+	}
 
-	private void runInput(double[] input) {
+	public double[] runInput(double[] input) {
 		outputs[0] = input;
 		for (int layer = 1; layer <= this.outputLayer; layer++) { // for every layer
 			for (int node = 0; node < this.sizes[layer]; node++) { // for every node
-				double weights[] = this.weights[layer][node];
+				double currentWeights[] = this.weights[layer - 1][node];
 				double sum = this.biases[layer][node];
-				for (int k = 0; k < weights.length; k++) { // for every connection
-					sum += weights[k] * input[k];
+				for (int k = 0; k < currentWeights.length; k++) { // for every connection
+					sum += currentWeights[k] * input[k];
 				}
 				outputs[layer][node] = 1 / (1 + Math.exp(-sum)); // logistic output
 			}
 			input = outputs[layer];
 		}
+		return outputs[outputLayer];
 	}
 
 	private void calculateDeltas(double[] target) {
@@ -94,7 +113,7 @@ public class QEstimator {
 				else {
 					double[] currentDeltas = deltas[layer + 1]; // the next layers deltas (we are working backwards)
 					for (int k = 0; k < currentDeltas.length; k++) { // every connection
-						error += currentDeltas[k] * weights[layer + 1][k][node];
+						error += currentDeltas[k] * weights[layer][node][k];
 					}
 				}
 				errors[layer][node] = error; // save error
@@ -109,11 +128,11 @@ public class QEstimator {
 			for (int node = 0; node < this.sizes[layer]; node++) { // for every node
 				double currentDelta = deltas[layer][node]; // the next layers deltas (we are working backwards)
 				for (int k = 0; k < incoming.length; k++) { // for each incoming connection
-					double currentChange = this.changes[layer][node][k];
+					double currentChange = this.changes[layer - 1][node][k];
 					currentChange = (learningRate * currentDelta * incoming[k]) + (this.momentum * currentChange);
 					
-					changes[layer][node][k] = currentChange;
-					weights[layer][node][k] += currentChange;
+					changes[layer - 1][node][k] = currentChange;
+					weights[layer - 1][node][k] += currentChange;
 				}
 				biases[layer][node] += learningRate * currentDelta;
 			}
