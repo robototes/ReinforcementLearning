@@ -6,7 +6,6 @@ package com.shsrobotics.reinforcementlearning;
  * @author Team 2412
  */
 public class QLearner {
-    
     private Mode currentMode;
     
     private double learningRate;
