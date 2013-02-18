@@ -1,10 +1,12 @@
 package com.shsrobotics.reinforcementlearning;
 
+import sun.nio.cs.ext.ISCII91;
+
 public class QEstimator {
 	
 	private final int hiddenLayers;
-	private final int learningRate;
-	private final int momentum;
+	private final double learningRate;
+	private final double momentum;
 	private final int numberOfOutputs;
 	private final int numberOfInputs;
 	private final int outputLayer;
@@ -78,7 +80,7 @@ public class QEstimator {
 	}
 	
 	public void train(DataPoint[] data) {
-		for (int i = 0; i < 20000; i++) {
+		for (int i = 0; i < 500; i++) {
 			for (int j = 0; j < data.length; j++) {
 				addDataPoint(data[j].input, data[j].output);
 			}
@@ -127,10 +129,9 @@ public class QEstimator {
 			double[] incoming = outputs[layer - 1];	
 			for (int node = 0; node < this.sizes[layer]; node++) { // for every node
 				double currentDelta = deltas[layer][node]; // the next layers deltas (we are working backwards)
-				for (int k = 0; k < incoming.length; k++) { // for each incoming connection
+				for (int k = 0; k < outputs[layer].length; k++) { // for each incoming connection
 					double currentChange = this.changes[layer - 1][node][k];
-					currentChange = (learningRate * currentDelta * incoming[k]) + (this.momentum * currentChange);
-					
+					currentChange = (learningRate * currentDelta * incoming[k]);// + (this.momentum * currentChange);
 					changes[layer - 1][node][k] = currentChange;
 					weights[layer - 1][node][k] += currentChange;
 				}
