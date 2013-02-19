@@ -23,6 +23,8 @@ public class QLearner {
     private String[] stateNames;
     private String[] actionNames;
     
+    private QEstimator qEstimator;
+    
     /**
      *  Accepts string array of action values and environment state parameters
      * @param actions
@@ -37,9 +39,16 @@ public class QLearner {
         stateNames = states;
         actionNames = actions;
         this.states = states.length;
-        this.actions = actions.length;
-        minimumStateValues = minimumStateValues = new double[this.states]; // array of mins and maxs for state parameters
-        minimumActionValues = maximumActionValues = new double[this.actions]; // array of mins and maxs for action parameters
+        this.actions = actions.length;        
+        
+        // assume 0 to 1 for ranges
+        minimumStateValues = fill(0.0, this.states); // array of minimums for state parameters
+        maximumStateValues = fill(1.0, this.states); // array of maximums for state parameters
+        minimumActionValues = fill(0.0, this.actions); // array of minimums for action parameters
+        maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
+        
+        //Create a neural network with the same number of hidden layers as inputs
+        qEstimator = new QEstimator(this.states, this.states, this.actions, learningRate);
     }
     
     /**
@@ -52,9 +61,10 @@ public class QLearner {
         double exploreCutoff = learningRate;        
         double[] actionValues = new double[actions];
         
-        if (currentMode == Mode.Act) { // check modes
+        if (currentMode.chooseBestOption) { // check modes
             exploreCutoff = 0.0;
-        } else if (currentMode == Mode.Watch) {
+        }
+        if (!currentMode.allowActionRequests) {
             throw new Error("Wrong learning mode.");
         }
         
@@ -62,6 +72,13 @@ public class QLearner {
             for (int i = 0; i < actions; i++) {
                 double range = maximumActionValues[i] - minimumActionValues[i];
                 actionValues[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
+            }
+        } else {
+            double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
+            for (int i = 0; i < accuracyIterations; i++) {
+                /*
+                 * ALGORITHM for maximizing Q-Values goes HERE
+                 */
             }
         }
         
@@ -88,6 +105,7 @@ public class QLearner {
      */
     public void setLearningRate(double rate) {
         learningRate = rate;
+        qEstimator.setLearningRate(learningRate);
     }
     
     /**
@@ -116,9 +134,24 @@ public class QLearner {
         learnerAccuracy = accuracy;
     }
     
-    public static class Mode {        
+    /**
+     * A mode that the Q Learner can operate in
+     */
+    public static class Mode { 
+        
+        /**
+         * Update Q-Values but don't act on them.
+         */
         public static final Mode Watch = new Mode(false, false); // gather data
+        
+        /**
+         * Explore the environment, updating Q-Values
+         */
         public static final Mode Learn = new Mode(true, false); // learn
+        
+        /**
+         * Choose the best action to act on instead of exploring, updating Q-Values
+         */
         public static final Mode Act = new Mode(true, true); // act on learned data
         
         private final boolean allowActionRequests;
@@ -126,13 +159,20 @@ public class QLearner {
         
         private Mode(boolean allowActionRequests, boolean chooseBestOption) {
             this.allowActionRequests = allowActionRequests;
-            this.chooseBestOption = allowActionRequests;
+            this.chooseBestOption = chooseBestOption;
         }
     }
     
+    /**
+     * Actions available, represented by key-value pairs.
+     */
     public class Action {
         private double[] parameters;
         
+        /**
+         * Create an action.
+         * @param values a double array of values.
+         */
         public Action(double[] values) {
             if (values.length != actions) {
                 throw new Error("Wrong action parameter length");
@@ -140,14 +180,26 @@ public class QLearner {
             parameters = values;
         }
         
+        /**
+         * Returns value from key
+         * @param key the string key.
+         * @return The value associated with the key.
+         */
         public double get(String key) {
             return parameters[indexOf(key, actionNames)];
         }
     }
     
+    /**
+     * An environment state, represented by key-value pairs.
+     */
     public class State {
         private double[] parameters;
         
+        /**
+         * Create a state.
+         * @param values a double array of values.
+         */
         public State(double[] values){
             if (values.length != states) {
                 throw new Error("Wrong state parameter length");
@@ -155,17 +207,41 @@ public class QLearner {
             parameters = values;
         }
         
+        /**
+         * Returns value from key
+         * @param key the string key.
+         * @return The value associated with the key.
+         */
         public double get(String key) {
             return parameters[indexOf(key, actionNames)];
         }
     }
     
-    public int indexOf(String value, String[] keys) {
+    /**
+     * Finds the  value from an array of string keys
+     * @param value the value to look for.
+     * @param keys the array of string keys.
+     */
+    private int indexOf(String value, String[] keys) {
         for (int i = 0; i < keys.length; i++) {
             if (value.equals(keys[i])) { // found
                 return i;
             }
         }
         return -1; // not found
+    }
+    
+    /**
+     * Fill double array with value
+     * @param value the value to fill the array with.
+     * @param length the length of the array.
+     * @return
+     */
+    private double[] fill(double value, int length) {
+        double[] toReturn = new double[length];
+        for (int i = 0; i < length; i++) {
+            toReturn[i] = value;
+        }
+        return toReturn;
     }
 }
