@@ -1,7 +1,5 @@
 package com.shsrobotics.reinforcementlearning;
 
-import sun.nio.cs.ext.ISCII91;
-
 public class QEstimator {
 	
 	private final int hiddenLayers;
