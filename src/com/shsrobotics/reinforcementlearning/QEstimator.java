@@ -114,6 +114,7 @@ public class QEstimator {
         if (newData.output.length != numberOfOutputs) {
             throw new Error("Incorrect number of outputs.");
         }
+		shift(data, newData);
     }
 
     /**
