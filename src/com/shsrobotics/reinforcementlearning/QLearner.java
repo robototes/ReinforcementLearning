@@ -23,6 +23,8 @@ public class QLearner {
     private String[] stateNames;
     private String[] actionNames;
     
+    private QEstimator qEstimator;
+    
     /**
      *  Accepts string array of action values and environment state parameters
      * @param actions
@@ -37,9 +39,16 @@ public class QLearner {
         stateNames = states;
         actionNames = actions;
         this.states = states.length;
-        this.actions = actions.length;
-        minimumStateValues = minimumStateValues = new double[this.states]; // array of mins and maxs for state parameters
-        minimumActionValues = maximumActionValues = new double[this.actions]; // array of mins and maxs for action parameters
+        this.actions = actions.length;        
+        
+        // assume 0 to 1 for ranges
+        minimumStateValues = fill(0.0, this.states); // array of minimums for state parameters
+        maximumStateValues = fill(1.0, this.states); // array of maximums for state parameters
+        minimumActionValues = fill(0.0, this.actions); // array of minimums for action parameters
+        maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
+        
+        //Create a neural network with the same number of hidden layers as inputs
+        qEstimator = new QEstimator(this.states, this.states, this.actions, learningRate);
     }
     
     /**
@@ -63,6 +72,13 @@ public class QLearner {
             for (int i = 0; i < actions; i++) {
                 double range = maximumActionValues[i] - minimumActionValues[i];
                 actionValues[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
+            }
+        } else {
+            double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
+            for (int i = 0; i < accuracyIterations; i++) {
+                /*
+                 * ALGORITHM for maximizing Q-Values goes HERE
+                 */
             }
         }
         
@@ -89,6 +105,7 @@ public class QLearner {
      */
     public void setLearningRate(double rate) {
         learningRate = rate;
+        qEstimator.setLearningRate(learningRate);
     }
     
     /**

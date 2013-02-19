@@ -6,10 +6,11 @@ package com.shsrobotics.reinforcementlearning;
 public class QEstimator {
 
     private final int hiddenLayers;
-    private final double learningRate;
     private final int numberOfOutputs;
     private final int numberOfInputs;
-    private final int outputLayer;
+    private final int outputLayer;    
+    
+    private double learningRate;
 
     private int[] sizes;
     private double[][] biases;
@@ -63,6 +64,14 @@ public class QEstimator {
                 this.changes[layer][node] = rands(this.sizes[layer + 1]);				
             }
         }		
+    }
+    
+    /**
+     * Set the learning rate.
+     * @param rate the learning rate.
+     */
+    public void setLearningRate(double rate) {
+        learningRate = rate;
     }
 
     /**
