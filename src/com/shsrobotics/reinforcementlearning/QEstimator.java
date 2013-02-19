@@ -1,5 +1,7 @@
 package com.shsrobotics.reinforcementlearning;
 
+import java.util.ArrayList;
+
 /**
  * Estimates Q Values using a neural network for use in a {@link QLearner}
  */
@@ -19,6 +21,10 @@ public class QEstimator {
     private double[][] deltas;
     private double[][][] changes;
     private double[][] errors;
+	
+	private DataPoint[] data;	
+	private int shortTermMemory;
+	private int iterations;
 
     /**
      * <h1>Q-Value Estimator</h1>
@@ -27,12 +33,16 @@ public class QEstimator {
      * @param hiddenLayers the number of hidden layers
      * @param learningRate the learning rate
      */
-    public QEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
+    protected QEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
         this.numberOfInputs = inputs;
         this.numberOfOutputs = outputs;
         this.hiddenLayers = hiddenLayers;		
         this.learningRate = hiddenLayers;
         this.outputLayer = 1 + this.hiddenLayers;
+		
+		iterations = 500;
+		shortTermMemory = 20; // store last 20 values
+		data = new DataPoint[shortTermMemory];
 
         this.sizes = new int[this.outputLayer + 1];
         this.outputs = new double[this.outputLayer + 1][];
@@ -73,31 +83,59 @@ public class QEstimator {
     public void setLearningRate(double rate) {
         learningRate = rate;
     }
+	
+	/**
+	 * Set the number of training iterations.
+	 * @param iterations the number of iterations.
+	 */
+	public void setIterations(int iterations) {
+		this.iterations = iterations;
+	}
+	
+	/**
+	 * Set how long the qEstimator uses new values to train.
+	 * @param memory the number values to store.
+	 */
+	public void setShortTermMemory(int memory) {
+		shortTermMemory = memory;
+		DataPoint[] temp = slice(data, 0, shortTermMemory);
+		data = new DataPoint[shortTermMemory];
+		data = temp;
+	}
 
     /**
      * Add a data point to the set and train the network on it.
      * @param data the data point to be added.
      */
-    public void addDataPoint(DataPoint data) {
-        if (data.input.length != numberOfInputs) {
+    public void addDataPoint(DataPoint newData) {
+        if (newData.input.length != numberOfInputs) {
             throw new Error("Incorrect number of inputs.");
         }
-        if (data.output.length != numberOfOutputs) {
+        if (newData.output.length != numberOfOutputs) {
             throw new Error("Incorrect number of outputs.");
         }
-        runInput(data.input);
-        calculateDeltas(data.output);
-        adjustWeights();
     }
 
     /**
      * Train the network on a series of data points.
      * @param data the data points to train with.
      */
-    public void train(DataPoint[] data) {
-        for (int i = 0; i < 500; i++) {
+    public void train(DataPoint[] newData) {
+        shortTermMemory = newData.length;
+		data = new DataPoint[shortTermMemory];
+		data = newData;
+		train();
+    }
+	
+	/**
+     * Train the network on stored data points.
+     */
+    public void train() {
+        for (int i = 0; i < iterations; i++) {
             for (int j = 0; j < data.length; j++) {
-                addDataPoint(data[j]);
+                runInput(data[j].input);
+				calculateDeltas(data[j].output);
+				adjustWeights();
             }
         }
     }
@@ -200,4 +238,21 @@ public class QEstimator {
         }
         return toReturn;
     }
+	
+	private DataPoint[] slice(DataPoint[] array, int a, int b) {
+		DataPoint[] toReturn = new DataPoint[b - a];
+		for (int i = 0; i < b - a; i++) {
+			toReturn[i] = array[a + i];
+		}
+		return toReturn;
+	}
+	
+	private DataPoint[] shift(DataPoint[] array, DataPoint toAdd) {
+		DataPoint[] toReturn = new DataPoint[shortTermMemory];
+		for (int i = 0; i < shortTermMemory - 1; i++) {
+			toReturn[i] = array[i+1];
+		}
+		toReturn[shortTermMemory - 1] = toAdd;
+		return toReturn;
+	}
 }

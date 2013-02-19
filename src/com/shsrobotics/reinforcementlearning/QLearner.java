@@ -12,6 +12,9 @@ public class QLearner {
     private double discountFactor;
     private double defaultQ;
     private double learnerAccuracy;
+	private double averageReward;
+	private double totalReward;
+	private double totalTime;
     
     private double[] minimumStateValues;
     private double[] minimumActionValues;
@@ -24,6 +27,8 @@ public class QLearner {
     private String[] actionNames;
     
     private QEstimator qEstimator;
+	
+	private int iterations;
     
     /**
      *  Accepts string array of action values and environment state parameters
@@ -31,7 +36,7 @@ public class QLearner {
      * @param states
      */
     public QLearner(String[] actions, String[] states) {
-        currentMode = Mode.Learn;
+        currentMode = Mode.kLearn;
         learningRate = 0.2;
         discountFactor = 0.25;
         defaultQ = 0.0;
@@ -39,7 +44,12 @@ public class QLearner {
         stateNames = states;
         actionNames = actions;
         this.states = states.length;
-        this.actions = actions.length;        
+        this.actions = actions.length; 
+		
+		iterations = 0;
+		averageReward = 0.0;
+		totalReward = 0.0;
+		totalTime = 0.0;
         
         // assume 0 to 1 for ranges
         minimumStateValues = fill(0.0, this.states); // array of minimums for state parameters
@@ -48,7 +58,8 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new QEstimator(this.states, this.states, this.actions, learningRate);
+        qEstimator = new QEstimator(this.states, this.states, 1, learningRate);
+		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
     }
     
     /**
@@ -84,9 +95,33 @@ public class QLearner {
         
         return new Action(actionValues);
     }
+	
+	/**
+	 * Update the {@link QEstimator} Q values.
+	 * @param state the old state.
+	 * @param action the action taken.
+	 * @param reward the reward gained.
+	 * @param newState the new state transitioned to.
+	 * @param transitionDelay the time for transition. For a Markov Decision Process, use transitionDelay = 0.
+	 */
+	public void updateQFactors(State state, Action action, double reward, double transitionDelay) {
+		double aK = getPrimaryLearningRate();
+		double bK = getSecondaryLearningRate();
+		double q = (1 - aK) * qEstimator.runInput(action.getRaw())[0]
+			+ aK * (reward - averageReward * transitionDelay);
+		
+		totalReward += reward;
+		totalTime += transitionDelay;
+		
+		double divisor = (totalTime == 0) ? iterations : totalTime;
+		
+		averageReward = (1 - bK) * averageReward + bK * (totalReward / divisor);
+		
+		qEstimator.addDataPoint(new DataPoint(state.getRaw(), action.getRaw()));
+	}
     
     /**
-     * Sets Q Learner mode. <br />
+     * Sets {@link QLearner} mode. <br />
      * <ul>
      *      <li>Watch: Gather data, but don't act.</li>
      *      <li>Learn: Explore environment, act on data, but don't always choose best choice.</li>
@@ -131,28 +166,38 @@ public class QLearner {
      * @param accuracy
      */
     public void setAccuracy(double accuracy) {
-        learnerAccuracy = accuracy;
+        learnerAccuracy = accuracy;		
+		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
     }
+	
+	/**
+	 * Reset the {@link QLearner} by setting the iterations to 0;
+	 */
+	public void reset() {
+		iterations = 0;
+		averageReward = 0.0;
+		totalReward = 0.0;
+	}
     
     /**
-     * A mode that the Q Learner can operate in
+     * A mode that the {@link QLearner} can operate in
      */
     public static class Mode { 
         
         /**
          * Update Q-Values but don't act on them.
          */
-        public static final Mode Watch = new Mode(false, false); // gather data
+        public static final Mode kWatch = new Mode(false, false); // gather data
         
         /**
          * Explore the environment, updating Q-Values
          */
-        public static final Mode Learn = new Mode(true, false); // learn
+        public static final Mode kLearn = new Mode(true, false); // learn
         
         /**
          * Choose the best action to act on instead of exploring, updating Q-Values
          */
-        public static final Mode Act = new Mode(true, true); // act on learned data
+        public static final Mode kAct = new Mode(true, true); // act on learned data
         
         private final boolean allowActionRequests;
         private final boolean chooseBestOption;
@@ -188,6 +233,14 @@ public class QLearner {
         public double get(String key) {
             return parameters[indexOf(key, actionNames)];
         }
+		
+		/**
+		 * Get the raw data.
+		 * @return the values.
+		 */
+		public double[] getRaw() {
+			return parameters;
+		}
     }
     
     /**
@@ -215,6 +268,14 @@ public class QLearner {
         public double get(String key) {
             return parameters[indexOf(key, actionNames)];
         }
+		
+		/**
+		 * Get the raw data.
+		 * @return the values.
+		 */
+		public double[] getRaw() {
+			return parameters;
+		}
     }
     
     /**
@@ -244,4 +305,12 @@ public class QLearner {
         }
         return toReturn;
     }
+	
+	private double getPrimaryLearningRate() {
+		return Math.log10(iterations) / iterations;
+	}
+	
+	private double getSecondaryLearningRate() {
+		return 90 / (100 + iterations);
+	}
 }
