@@ -9,7 +9,6 @@ public class QLearner {
     private Mode currentMode;
     
     private double learningRate;
-    private double discountFactor;
     private double defaultQ;
     private double learnerAccuracy;
 	private double averageReward;
@@ -38,7 +37,6 @@ public class QLearner {
     public QLearner(String[] actions, String[] states) {
         currentMode = Mode.kLearn;
         learningRate = 0.2;
-        discountFactor = 0.25;
         defaultQ = 0.0;
         learnerAccuracy = 0.9;
         stateNames = states;
@@ -143,15 +141,7 @@ public class QLearner {
         qEstimator.setLearningRate(learningRate);
     }
     
-    /**
-     * Sets the Discount Factor. <br />
-     * A higher discount factor places a higher value on immediate rewards.
-     * @param factor
-     */
-    public void setDiscountFactor(double factor) {
-        discountFactor = factor;
-    }
-    
+        
     /**
      * Sets the default Q value to use in the Q Estimator Neural Network.
      * @param q
