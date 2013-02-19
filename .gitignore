@@ -6,4 +6,4 @@ j2meclasses/*
 *.jar
 *.class
 *.tmp
-/ReinforcementLearning/nbproject/private/
+/ReinforcementLearning/nbproject/private/*
