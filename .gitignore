@@ -2,6 +2,7 @@ suite/*
 build/*
 resources/*
 j2meclasses/*
+nbproject/*
 
 *.jar
 *.class

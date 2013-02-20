@@ -9,14 +9,18 @@ public class QLearner {
     private Mode currentMode;
     
     private double learningRate;
-    private double discountFactor;
     private double defaultQ;
     private double learnerAccuracy;
+	private double averageReward;
+	private double totalReward;
+	private double totalTime;
+	
+	private final double step = 0.00001;
     
-    private double[] minimumStateValues;
-    private double[] minimumActionValues;
-    private double[] maximumStateValues;
-    private double[] maximumActionValues;
+    public double[] minimumStateValues;
+    public double[] minimumActionValues;
+    public double[] maximumStateValues;
+    public double[] maximumActionValues;
     
     private int states;
     private int actions;
@@ -24,6 +28,8 @@ public class QLearner {
     private String[] actionNames;
     
     private QEstimator qEstimator;
+	
+	private int iterations;
     
     /**
      *  Accepts string array of action values and environment state parameters
@@ -31,15 +37,19 @@ public class QLearner {
      * @param states
      */
     public QLearner(String[] actions, String[] states) {
-        currentMode = Mode.Learn;
+        currentMode = Mode.kLearn;
         learningRate = 0.2;
-        discountFactor = 0.25;
         defaultQ = 0.0;
         learnerAccuracy = 0.9;
         stateNames = states;
         actionNames = actions;
         this.states = states.length;
-        this.actions = actions.length;        
+        this.actions = actions.length; 
+		
+		iterations = 0;
+		averageReward = 0.0;
+		totalReward = 0.0;
+		totalTime = 0.0;
         
         // assume 0 to 1 for ranges
         minimumStateValues = fill(0.0, this.states); // array of minimums for state parameters
@@ -48,7 +58,8 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new QEstimator(this.states, this.states, this.actions, learningRate);
+        qEstimator = new QEstimator(this.states + this.actions, this.states, 1, learningRate);
+		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
     }
     
     /**
@@ -58,6 +69,7 @@ public class QLearner {
      * @return
      */
     public Action requestAction(State state) {
+		state = scaleState(state);
         double exploreCutoff = learningRate;        
         double[] actionValues = new double[actions];
         
@@ -75,18 +87,55 @@ public class QLearner {
             }
         } else {
             double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
+			double[] currentAction = minimumActionValues;
+			double[] scaledAction = scaleAction(new Action(currentAction)).getRaw();
             for (int i = 0; i < accuracyIterations; i++) {
-                /*
-                 * ALGORITHM for maximizing Q-Values goes HERE
-                 */
+				//find gradient
+                double[] gradient = new double[this.actions]; // one for each
+				for (int action = 0; action < this.actions; action++) {
+					double[] test = scaledAction;
+					test[action] += step;
+					double difference = qEstimator.runInput(join(state.getRaw(), test))[0] - 
+						qEstimator.runInput(join(state.getRaw(), scaledAction))[0];
+					gradient[action] = difference / step;
+				}
+				//apply gradient
+				for (int action = 0; action < this.actions; action++) {
+					currentAction[action] += gradient[action];
+				}
             }
         }
         
         return new Action(actionValues);
     }
+	
+	/**
+	 * Update the {@link QEstimator} Q values.
+	 * @param state the old state.
+	 * @param action the action taken.
+	 * @param reward the reward gained.
+	 * @param newState the new state transitioned to.
+	 * @param transitionDelay the time for transition. For a Markov Decision Process, use transitionDelay = 0.
+	 */
+	public void updateQFactors(State state, Action action, double reward, double transitionDelay) {
+		double aK = getPrimaryLearningRate();
+		double bK = getSecondaryLearningRate();
+		double q = (1 - aK) * qEstimator.runInput(join(scaleState(state).getRaw(), scaleAction(action).getRaw()))[0]
+			+ aK * (reward - averageReward * transitionDelay);
+		
+		totalReward += reward;
+		totalTime += transitionDelay;
+		
+		double divisor = (totalTime == 0) ? iterations : totalTime;
+		
+		averageReward = (1 - bK) * averageReward + bK * (totalReward / divisor);
+		
+		double[] output = {q};
+		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
+	}
     
     /**
-     * Sets Q Learner mode. <br />
+     * Sets {@link QLearner} mode. <br />
      * <ul>
      *      <li>Watch: Gather data, but don't act.</li>
      *      <li>Learn: Explore environment, act on data, but don't always choose best choice.</li>
@@ -108,15 +157,7 @@ public class QLearner {
         qEstimator.setLearningRate(learningRate);
     }
     
-    /**
-     * Sets the Discount Factor. <br />
-     * A higher discount factor places a higher value on immediate rewards.
-     * @param factor
-     */
-    public void setDiscountFactor(double factor) {
-        discountFactor = factor;
-    }
-    
+        
     /**
      * Sets the default Q value to use in the Q Estimator Neural Network.
      * @param q
@@ -131,28 +172,38 @@ public class QLearner {
      * @param accuracy
      */
     public void setAccuracy(double accuracy) {
-        learnerAccuracy = accuracy;
+        learnerAccuracy = accuracy;		
+		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
     }
+	
+	/**
+	 * Reset the {@link QLearner} by setting the iterations to 0;
+	 */
+	public void reset() {
+		iterations = 0;
+		averageReward = 0.0;
+		totalReward = 0.0;
+	}
     
     /**
-     * A mode that the Q Learner can operate in
+     * A mode that the {@link QLearner} can operate in
      */
     public static class Mode { 
         
         /**
          * Update Q-Values but don't act on them.
          */
-        public static final Mode Watch = new Mode(false, false); // gather data
+        public static final Mode kWatch = new Mode(false, false); // gather data
         
         /**
          * Explore the environment, updating Q-Values
          */
-        public static final Mode Learn = new Mode(true, false); // learn
+        public static final Mode kLearn = new Mode(true, false); // learn
         
         /**
          * Choose the best action to act on instead of exploring, updating Q-Values
          */
-        public static final Mode Act = new Mode(true, true); // act on learned data
+        public static final Mode kAct = new Mode(true, true); // act on learned data
         
         private final boolean allowActionRequests;
         private final boolean chooseBestOption;
@@ -188,6 +239,14 @@ public class QLearner {
         public double get(String key) {
             return parameters[indexOf(key, actionNames)];
         }
+		
+		/**
+		 * Get the raw data.
+		 * @return the values.
+		 */
+		public double[] getRaw() {
+			return parameters;
+		}
     }
     
     /**
@@ -215,6 +274,14 @@ public class QLearner {
         public double get(String key) {
             return parameters[indexOf(key, actionNames)];
         }
+		
+		/**
+		 * Get the raw data.
+		 * @return the values.
+		 */
+		public double[] getRaw() {
+			return parameters;
+		}
     }
     
     /**
@@ -244,4 +311,96 @@ public class QLearner {
         }
         return toReturn;
     }
+	
+	private double getPrimaryLearningRate() {
+		return Math.log10(iterations) / iterations;
+	}
+	
+	private double getSecondaryLearningRate() {
+		return 90 / (100 + iterations);
+	}
+	
+	/**
+	 * Scale state values.
+	 * @param state
+	 * @return scaled values.
+	 */
+	private State scaleState(State state) {
+		double[] raw = state.getRaw();
+		int length = raw.length;
+		for (int i = 0; i < length; i++) {
+			raw[i] = raw[i] / (maximumStateValues[i] - minimumStateValues[i]);
+		}
+		return new State(raw);
+	}
+	
+	/**
+	 * Scale action values.
+	 * @param action
+	 * @return scaled values.
+	 */
+	private Action scaleAction(Action action) {
+		double[] raw = action.getRaw();
+		int length = raw.length;
+		for (int i = 0; i < length; i++) {
+			raw[i] = raw[i] / (maximumStateValues[i] - minimumStateValues[i]);
+		}
+		return new Action(raw);
+	}
+	
+	/**
+	 * Join two arrays
+	 * @param a
+	 * @param b
+	 * @return 
+	 */
+	private DataPoint[] join(DataPoint[] a, DataPoint[] b) {
+		int length = a.length + b.length;
+		DataPoint[] toReturn = new DataPoint[length];
+		for (int i = 0; i < length; i++) {
+			if (i > a.length - 1) {
+				toReturn[i] = b[i - a.length];
+			} else {
+				toReturn[i] = a[i];
+			}
+		}
+		return toReturn;
+	}
+	
+	/**
+	 * Join two arrays
+	 * @param a
+	 * @param b
+	 * @return 
+	 */
+	private double[] join(double[] a, double[] b) {
+		int length = a.length + b.length;
+		double[] toReturn = new double[length];
+		for (int i = 0; i < length; i++) {
+			if (i > a.length - 1) {
+				toReturn[i] = b[i - a.length];
+			} else {
+				toReturn[i] = a[i];
+			}
+		}
+		return toReturn;
+	}
+	
+	/**
+	 * Create a state.
+	 * @param arg the constructor arguments.
+	 * @return The state.
+	 */
+	public State getState(double[] arg) {
+		return new State(arg);
+	}
+	
+	/**
+	 * Create an action.
+	 * @param arg the constructor arguments.
+	 * @return The action.
+	 */
+	public Action getAction(double[] arg) {
+		return new Action(arg);
+	}
 }
