@@ -38,8 +38,8 @@ public class QEstimator {
         this.learningRate = hiddenLayers;
         this.outputLayer = 1 + this.hiddenLayers;
 		
-		iterations = 500;
-		shortTermMemory = 20; // store last 20 values
+		iterations = 100;
+		shortTermMemory = 50000; // store last n values
 		data = new DataPoint[shortTermMemory];
 
         this.sizes = new int[this.outputLayer + 1];
@@ -112,7 +112,7 @@ public class QEstimator {
         if (newData.output.length != numberOfOutputs) {
             throw new Error("Incorrect number of outputs.");
         }
-		shift(data, newData);
+		data = shift(data, newData);
     }
 
     /**
@@ -132,6 +132,9 @@ public class QEstimator {
     public void train() {
         for (int i = 0; i < iterations; i++) {
             for (int j = 0; j < data.length; j++) {
+                if (data[j] == null) { // if not enough data has been entered
+                    continue;
+                }
                 runInput(data[j].input);
 				calculateDeltas(data[j].output);
 				adjustWeights();
@@ -248,10 +251,10 @@ public class QEstimator {
 	
 	private DataPoint[] shift(DataPoint[] array, DataPoint toAdd) {
 		DataPoint[] toReturn = new DataPoint[shortTermMemory];
-		for (int i = 0; i < shortTermMemory - 1; i++) {
-			toReturn[i] = array[i+1];
+		for (int i = 1; i < shortTermMemory; i++) {
+			toReturn[i] = array[i-1];
 		}
-		toReturn[shortTermMemory - 1] = toAdd;
+		toReturn[0] = toAdd;
 		return toReturn;
 	}
 }

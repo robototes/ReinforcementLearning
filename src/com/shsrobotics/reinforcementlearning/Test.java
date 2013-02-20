@@ -17,14 +17,16 @@ public class Test {
 		double[] minAction = {0.0};
 		double[] maxAction = {1.0};
 		double[] minState = {0.0};
-		double[] maxState = {200000.0};
+		double[] maxState = {20.0};
 		learner.minimumActionValues = minAction;
 		learner.maximumActionValues = maxAction;
 		learner.minimumStateValues = minState;
 		learner.maximumStateValues = maxState;
+        
+        learner.setLearningRate(1.0);
 		
-		for (int i = 0; i < 10000; i++) { // 10000 learning iterations
-			if (Math.random() < 0.1) {
+		for (int i = 0; i < 100; i++) { // 100 learning iterations
+			if (Math.random() < 0.7) {
 				people++;
 			}
 			double[] environment = {people};

@@ -14,7 +14,7 @@ public class QLearner {
 	private double totalReward;
 	private double totalTime;
 	
-	private final double step = 0.00001;
+	private final double step = 0.1;
     
     public double[] minimumStateValues;
     public double[] minimumActionValues;
@@ -44,7 +44,7 @@ public class QLearner {
         this.states = states.length;
         this.actions = actions.length; 
 		
-		iterations = 0;
+		iterations = 1;
 		averageReward = 0.0;
 		totalReward = 0.0;
 		totalTime = 0.0;
@@ -57,7 +57,7 @@ public class QLearner {
         
         //Create a neural network with the same number of hidden layers as inputs
         qEstimator = new QEstimator(this.states + this.actions, this.states, 1, learningRate);
-		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
+		qEstimator.setShortTermMemory((int) (5 * Math.ceil(1 / (1 - learnerAccuracy))));
     }
     
     /**
@@ -85,7 +85,7 @@ public class QLearner {
             }
         } else {
             double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
-			double[] currentAction = minimumActionValues;
+			double[] currentAction = average(minimumActionValues, maximumActionValues);
 			double[] scaledAction = scaleAction(new Action(currentAction)).getRaw();
             for (int i = 0; i < accuracyIterations; i++) {
 				//find gradient
@@ -95,6 +95,7 @@ public class QLearner {
 					test[action] += step;
 					double difference = qEstimator.runInput(join(state.getRaw(), test))[0] - 
 						qEstimator.runInput(join(state.getRaw(), scaledAction))[0];
+                    if (difference > 0) System.out.println(difference);
 					gradient[action] = difference / step;
 				}
 				//apply gradient
@@ -116,9 +117,11 @@ public class QLearner {
 	 * @param transitionDelay the time for transition. For a Markov Decision Process, use transitionDelay = 0.
 	 */
 	public void updateQFactors(State state, Action action, double reward, double transitionDelay) {
+        state = scaleState(state);
+        action = scaleAction(action);
 		double aK = getPrimaryLearningRate();
 		double bK = getSecondaryLearningRate();
-		double q = (1 - aK) * qEstimator.runInput(join(scaleState(state).getRaw(), scaleAction(action).getRaw()))[0]
+		double q = (1 - aK) * qEstimator.runInput(join(state.getRaw(), action.getRaw()))[0]
 			+ aK * (reward - averageReward * transitionDelay);
 		
 		totalReward += reward;
@@ -130,6 +133,8 @@ public class QLearner {
 		
 		double[] output = {q};
 		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
+        qEstimator.train();
+        iterations++;
 	}
     
     /**
@@ -303,11 +308,11 @@ public class QLearner {
     }
 	
 	private double getPrimaryLearningRate() {
-		return Math.log10(iterations) / iterations;
+		return (Math.log10(iterations) / iterations);
 	}
 	
 	private double getSecondaryLearningRate() {
-		return 90 / (100 + iterations);
+		return (90.0 / (100.0 + iterations));
 	}
 	
 	/**
@@ -333,7 +338,7 @@ public class QLearner {
 		double[] raw = action.getRaw();
 		int length = raw.length;
 		for (int i = 0; i < length; i++) {
-			raw[i] /= (maximumStateValues[i] - minimumStateValues[i]);
+			raw[i] /= (maximumActionValues[i] - minimumActionValues[i]);
 		}
 		return new Action(raw);
 	}
@@ -375,6 +380,17 @@ public class QLearner {
 		}
 		return toReturn;
 	}
+    
+    public double[] average(double[] a, double[] b) {
+        if (a.length != b.length) {
+            throw new Error("Mismatch lengths");
+        }
+        double[] toReturn = new double[a.length];
+        for (int i = 0; i < a.length; i++) {
+            toReturn[i] = (a[i] + b[i]) / 2;
+        }
+        return toReturn;
+    }
 	
 	/**
 	 * Create a state.
