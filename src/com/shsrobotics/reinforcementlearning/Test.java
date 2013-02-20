@@ -33,6 +33,7 @@ public class Test {
 			State state = learner.getState(environment);
 			Action action = learner.requestAction(state);
 			double reward = preformAction(action);
+            if (reward > 0.0) System.out.println(reward);
 			learner.updateQFactors(state, action, reward, 0.0);
 		}
 		
@@ -55,7 +56,8 @@ public class Test {
 			State state = learner.getState(environment);			
 			Action action = learner.requestAction(state);			
 			double reward = preformAction(action);			
-			learner.updateQFactors(state, action, reward, 0.0);			
+			learner.updateQFactors(state, action, reward, 0.0);		
+            System.out.println(action.get("Open new line"));
 			if (Math.round(action.get("Open new line")) == 1) {
 				System.out.println("Opened a new line when " + people + " people were in line.");
 			} else {

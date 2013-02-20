@@ -14,7 +14,7 @@ public class QLearner {
 	private double totalReward;
 	private double totalTime;
 	
-	private final double step = 0.1;
+	private final double step = 0.001;
     
     public double[] minimumStateValues;
     public double[] minimumActionValues;
@@ -67,7 +67,6 @@ public class QLearner {
      * @return
      */
     public Action requestAction(State state) {
-		state = scaleState(state);
         double exploreCutoff = learningRate;        
         double[] actionValues = new double[actions];
         
@@ -86,22 +85,24 @@ public class QLearner {
         } else {
             double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
 			double[] currentAction = average(minimumActionValues, maximumActionValues);
-			double[] scaledAction = scaleAction(new Action(currentAction)).getRaw();
             for (int i = 0; i < accuracyIterations; i++) {
 				//find gradient
                 double[] gradient = new double[this.actions]; // one for each
 				for (int action = 0; action < this.actions; action++) {
-					double[] test = scaledAction;
+					double[] test = new double[this.actions];
+                    System.arraycopy(currentAction, 0, test, 0, this.actions);
 					test[action] += step;
 					double difference = qEstimator.runInput(join(state.getRaw(), test))[0] - 
-						qEstimator.runInput(join(state.getRaw(), scaledAction))[0];
-                    if (difference > 0) System.out.println(difference);
-					gradient[action] = difference / step;
+						qEstimator.runInput(join(state.getRaw(), currentAction))[0];
+                    gradient[action] = difference / step;
 				}
 				//apply gradient
 				for (int action = 0; action < this.actions; action++) {
 					currentAction[action] += gradient[action];
 				}
+            }
+            for (int action = 0; action < this.actions; action++) {
+                actionValues[action] += currentAction[action];
             }
         }
         
@@ -117,8 +118,6 @@ public class QLearner {
 	 * @param transitionDelay the time for transition. For a Markov Decision Process, use transitionDelay = 0.
 	 */
 	public void updateQFactors(State state, Action action, double reward, double transitionDelay) {
-        state = scaleState(state);
-        action = scaleAction(action);
 		double aK = getPrimaryLearningRate();
 		double bK = getSecondaryLearningRate();
 		double q = (1 - aK) * qEstimator.runInput(join(state.getRaw(), action.getRaw()))[0]
@@ -315,33 +314,6 @@ public class QLearner {
 		return (90.0 / (100.0 + iterations));
 	}
 	
-	/**
-	 * Scale state values.
-	 * @param state
-	 * @return scaled values.
-	 */
-	private State scaleState(State state) {
-		double[] raw = state.getRaw();
-		int length = raw.length;
-		for (int i = 0; i < length; i++) {
-			raw[i] /= (maximumStateValues[i] - minimumStateValues[i]);
-		}
-		return new State(raw);
-	}
-	
-	/**
-	 * Scale action values.
-	 * @param action
-	 * @return scaled values.
-	 */
-	private Action scaleAction(Action action) {
-		double[] raw = action.getRaw();
-		int length = raw.length;
-		for (int i = 0; i < length; i++) {
-			raw[i] /= (maximumActionValues[i] - minimumActionValues[i]);
-		}
-		return new Action(raw);
-	}
 	
 	/**
 	 * Join two arrays
