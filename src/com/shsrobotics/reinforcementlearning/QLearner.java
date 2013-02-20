@@ -9,7 +9,6 @@ public class QLearner {
     private Mode currentMode;
     
     private double learningRate;
-    private double defaultQ;
     private double learnerAccuracy;
 	private double averageReward;
 	private double totalReward;
@@ -39,7 +38,6 @@ public class QLearner {
     public QLearner(String[] actions, String[] states) {
         currentMode = Mode.kLearn;
         learningRate = 0.2;
-        defaultQ = 0.0;
         learnerAccuracy = 0.9;
         stateNames = states;
         actionNames = actions;
@@ -157,14 +155,6 @@ public class QLearner {
         qEstimator.setLearningRate(learningRate);
     }
     
-        
-    /**
-     * Sets the default Q value to use in the Q Estimator Neural Network.
-     * @param q
-     */
-    public void setDefaultQValue(double q) {
-        defaultQ = q;
-    }
     
     /**
      * Sets the Q maximization algorithm accuracy. <br />
@@ -272,7 +262,7 @@ public class QLearner {
          * @return The value associated with the key.
          */
         public double get(String key) {
-            return parameters[indexOf(key, actionNames)];
+            return parameters[indexOf(key, stateNames)];
         }
 		
 		/**
@@ -329,7 +319,7 @@ public class QLearner {
 		double[] raw = state.getRaw();
 		int length = raw.length;
 		for (int i = 0; i < length; i++) {
-			raw[i] = raw[i] / (maximumStateValues[i] - minimumStateValues[i]);
+			raw[i] /= (maximumStateValues[i] - minimumStateValues[i]);
 		}
 		return new State(raw);
 	}
@@ -343,7 +333,7 @@ public class QLearner {
 		double[] raw = action.getRaw();
 		int length = raw.length;
 		for (int i = 0; i < length; i++) {
-			raw[i] = raw[i] / (maximumStateValues[i] - minimumStateValues[i]);
+			raw[i] /= (maximumStateValues[i] - minimumStateValues[i]);
 		}
 		return new Action(raw);
 	}
