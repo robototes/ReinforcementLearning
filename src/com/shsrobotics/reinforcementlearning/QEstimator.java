@@ -1,7 +1,5 @@
 package com.shsrobotics.reinforcementlearning;
 
-import java.util.ArrayList;
-
 /**
  * Estimates Q Values using a neural network for use in a {@link QLearner}
  */
