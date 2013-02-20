@@ -14,11 +14,13 @@ public class QLearner {
 	private double averageReward;
 	private double totalReward;
 	private double totalTime;
+	
+	private final double step = 0.00001;
     
-    private double[] minimumStateValues;
-    private double[] minimumActionValues;
-    private double[] maximumStateValues;
-    private double[] maximumActionValues;
+    public double[] minimumStateValues;
+    public double[] minimumActionValues;
+    public double[] maximumStateValues;
+    public double[] maximumActionValues;
     
     private int states;
     private int actions;
@@ -56,7 +58,7 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new QEstimator(this.states, this.states, 1, learningRate);
+        qEstimator = new QEstimator(this.states + this.actions, this.states, 1, learningRate);
 		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
     }
     
@@ -67,6 +69,7 @@ public class QLearner {
      * @return
      */
     public Action requestAction(State state) {
+		state = scaleState(state);
         double exploreCutoff = learningRate;        
         double[] actionValues = new double[actions];
         
@@ -84,10 +87,22 @@ public class QLearner {
             }
         } else {
             double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
+			double[] currentAction = minimumActionValues;
+			double[] scaledAction = scaleAction(new Action(currentAction)).getRaw();
             for (int i = 0; i < accuracyIterations; i++) {
-                /*
-                 * ALGORITHM for maximizing Q-Values goes HERE
-                 */
+				//find gradient
+                double[] gradient = new double[this.actions]; // one for each
+				for (int action = 0; action < this.actions; action++) {
+					double[] test = scaledAction;
+					test[action] += step;
+					double difference = qEstimator.runInput(join(state.getRaw(), test))[0] - 
+						qEstimator.runInput(join(state.getRaw(), scaledAction))[0];
+					gradient[action] = difference / step;
+				}
+				//apply gradient
+				for (int action = 0; action < this.actions; action++) {
+					currentAction[action] += gradient[action];
+				}
             }
         }
         
@@ -105,7 +120,7 @@ public class QLearner {
 	public void updateQFactors(State state, Action action, double reward, double transitionDelay) {
 		double aK = getPrimaryLearningRate();
 		double bK = getSecondaryLearningRate();
-		double q = (1 - aK) * qEstimator.runInput(action.getRaw())[0]
+		double q = (1 - aK) * qEstimator.runInput(join(scaleState(state).getRaw(), scaleAction(action).getRaw()))[0]
 			+ aK * (reward - averageReward * transitionDelay);
 		
 		totalReward += reward;
@@ -115,7 +130,8 @@ public class QLearner {
 		
 		averageReward = (1 - bK) * averageReward + bK * (totalReward / divisor);
 		
-		qEstimator.addDataPoint(new DataPoint(state.getRaw(), action.getRaw()));
+		double[] output = {q};
+		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
 	}
     
     /**
@@ -302,5 +318,89 @@ public class QLearner {
 	
 	private double getSecondaryLearningRate() {
 		return 90 / (100 + iterations);
+	}
+	
+	/**
+	 * Scale state values.
+	 * @param state
+	 * @return scaled values.
+	 */
+	private State scaleState(State state) {
+		double[] raw = state.getRaw();
+		int length = raw.length;
+		for (int i = 0; i < length; i++) {
+			raw[i] = raw[i] / (maximumStateValues[i] - minimumStateValues[i]);
+		}
+		return new State(raw);
+	}
+	
+	/**
+	 * Scale action values.
+	 * @param action
+	 * @return scaled values.
+	 */
+	private Action scaleAction(Action action) {
+		double[] raw = action.getRaw();
+		int length = raw.length;
+		for (int i = 0; i < length; i++) {
+			raw[i] = raw[i] / (maximumStateValues[i] - minimumStateValues[i]);
+		}
+		return new Action(raw);
+	}
+	
+	/**
+	 * Join two arrays
+	 * @param a
+	 * @param b
+	 * @return 
+	 */
+	private DataPoint[] join(DataPoint[] a, DataPoint[] b) {
+		int length = a.length + b.length;
+		DataPoint[] toReturn = new DataPoint[length];
+		for (int i = 0; i < length; i++) {
+			if (i > a.length - 1) {
+				toReturn[i] = b[i - a.length];
+			} else {
+				toReturn[i] = a[i];
+			}
+		}
+		return toReturn;
+	}
+	
+	/**
+	 * Join two arrays
+	 * @param a
+	 * @param b
+	 * @return 
+	 */
+	private double[] join(double[] a, double[] b) {
+		int length = a.length + b.length;
+		double[] toReturn = new double[length];
+		for (int i = 0; i < length; i++) {
+			if (i > a.length - 1) {
+				toReturn[i] = b[i - a.length];
+			} else {
+				toReturn[i] = a[i];
+			}
+		}
+		return toReturn;
+	}
+	
+	/**
+	 * Create a state.
+	 * @param arg the constructor arguments.
+	 * @return The state.
+	 */
+	public State getState(double[] arg) {
+		return new State(arg);
+	}
+	
+	/**
+	 * Create an action.
+	 * @param arg the constructor arguments.
+	 * @return The action.
+	 */
+	public Action getAction(double[] arg) {
+		return new Action(arg);
 	}
 }
