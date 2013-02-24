@@ -1,7 +1,7 @@
-ReinforcementLearning
-=====================
+Reinforcement Q-Learning
+======================
 
-A FIRST robot that learns how to operate itself, written in Java.
+A FIRST robot that learns how to operate itself, written in Java.  Designed to run on a National Instruments cRIO-FRC II.
 
 Files
 -----
