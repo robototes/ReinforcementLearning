@@ -26,7 +26,7 @@ public class QLearner {
     private String[] stateNames;
     private String[] actionNames;
     
-    private QEstimator qEstimator;
+    private ErsatzEstimator qEstimator;
 	
 	private int iterations;
     
@@ -56,7 +56,7 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new QEstimator(this.states + this.actions, this.states, 1, learningRate);
+        qEstimator = new ErsatzEstimator(this.states + this.actions, this.states, 1, learningRate);
 		qEstimator.setShortTermMemory((int) (5 * Math.ceil(1 / (1 - learnerAccuracy))));
     }
     
@@ -78,23 +78,20 @@ public class QLearner {
         }
         
         if (Math.random() < exploreCutoff) { // choose random values
-            for (int i = 0; i < actions; i++) {
-                double range = maximumActionValues[i] - minimumActionValues[i];
-                actionValues[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
-            }
+            actionValues = rands();
         } else {
-            double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
-			double[] currentAction = average(minimumActionValues, maximumActionValues);
+			double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
+			double[] currentAction = rands();
             for (int i = 0; i < accuracyIterations; i++) {
 				//find gradient
-                double[] gradient = new double[this.actions]; // one for each
+                double[] gradient = new double[this.actions]; // partial derivative for each action parameter				
 				for (int action = 0; action < this.actions; action++) {
 					double[] test = new double[this.actions];
                     System.arraycopy(currentAction, 0, test, 0, this.actions);
 					test[action] += step;
 					double difference = qEstimator.runInput(join(state.getRaw(), test))[0] - 
 						qEstimator.runInput(join(state.getRaw(), currentAction))[0];
-                    gradient[action] = difference / step;
+                    gradient[action] = difference / step; // calculate partial derivative
 				}
 				//apply gradient
 				for (int action = 0; action < this.actions; action++) {
@@ -121,7 +118,7 @@ public class QLearner {
 		double aK = getPrimaryLearningRate();
 		double bK = getSecondaryLearningRate();
 		double q = (1 - aK) * qEstimator.runInput(join(state.getRaw(), action.getRaw()))[0]
-			+ aK * (reward - averageReward * transitionDelay);
+			+ aK * (reward - averageReward * transitionDelay);	
 		
 		totalReward += reward;
 		totalTime += transitionDelay;
@@ -130,7 +127,8 @@ public class QLearner {
 		
 		averageReward = (1 - bK) * averageReward + bK * (totalReward / divisor);
 		
-		double[] output = {q};
+		double[] output = {reward};
+		qEstimator.setLearningRate(Math.sqrt(aK));
 		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
         qEstimator.train();
         iterations++;
@@ -381,4 +379,25 @@ public class QLearner {
 	public Action getAction(double[] arg) {
 		return new Action(arg);
 	}
+	
+	/**
+     * Fill an array with random action values
+     * @param size the size of the array
+     * @return The array.
+     */
+    private double[] rands() {
+        double[] toReturn = new double[this.actions];
+        for (int i = 0; i < this.actions; i++) {
+                double range = maximumActionValues[i] - minimumActionValues[i];
+                toReturn[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
+        }
+        return toReturn;
+    }
+	
+	public double runInput(double number, double action) {
+		double yes = 10 - 12 / (1 + Math.exp(number - 10));
+		double no = - 4 / (1 + Math.exp(10 - number));
+		double toReturn = action * yes + (1 - action) * no;
+		return toReturn;
+    }
 }

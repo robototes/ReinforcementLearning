@@ -23,7 +23,8 @@ public class Test {
 		learner.minimumStateValues = minState;
 		learner.maximumStateValues = maxState;
         
-        learner.setLearningRate(1.0);
+        learner.setLearningRate(0.8);
+		learner.setAccuracy(0.95);
 		
 		for (int i = 0; i < 100; i++) { // 100 learning iterations
 			if (Math.random() < 0.7) {
@@ -33,10 +34,8 @@ public class Test {
 			State state = learner.getState(environment);
 			Action action = learner.requestAction(state);
 			double reward = preformAction(action);
-            if (reward > 0.0) System.out.println(reward);
 			learner.updateQFactors(state, action, reward, 0.0);
 		}
-		
 		people = 0;			
 		learner.setMode(QLearner.Mode.kAct);		
 		while (true) {
@@ -58,24 +57,22 @@ public class Test {
 			double reward = preformAction(action);			
 			learner.updateQFactors(state, action, reward, 0.0);		
             System.out.println(action.get("Open new line"));
-			if (Math.round(action.get("Open new line")) == 1) {
-				System.out.println("Opened a new line when " + people + " people were in line.");
-			} else {
-				System.out.println("Did not open a new line when " + people + " people were in line.");
-			}
 		}
 	}
 	
 	public static double preformAction(Action action) {
-		if (Math.round(action.get("Open new line")) == 1) {					
-			people = (int) Math.floor(people / 2);
-			if (people > 10) {
+		int oldPeople = people;
+		if (Math.round(action.get("Open new line")) == 1) {
+			System.out.println("Opened a new line when " + oldPeople + " people were in line.");
+			people = (--people < 0) ? 0 : people;
+			if (oldPeople > 10) {
 				return 10;
 			} else {
 				return -2;
 			}	
 		} else {
-			if (people <= 10) {
+			System.out.println("Did not open a new line when " + people + " people were in line.");
+			if (oldPeople <= 10) {
 				return 0;
 			} else {
 				return -4;

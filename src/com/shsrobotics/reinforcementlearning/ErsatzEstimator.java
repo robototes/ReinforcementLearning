@@ -3,7 +3,7 @@ package com.shsrobotics.reinforcementlearning;
 /**
  * Estimates Q Values using a neural network for use in a {@link QLearner}
  */
-public class QEstimator {
+public class ErsatzEstimator {
 	
     private final int hiddenLayers;
     private final int numberOfOutputs;
@@ -31,7 +31,7 @@ public class QEstimator {
      * @param hiddenLayers the number of hidden layers
      * @param learningRate the learning rate
      */
-    protected QEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
+    protected ErsatzEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
         this.numberOfInputs = inputs;
         this.numberOfOutputs = outputs;
         this.hiddenLayers = hiddenLayers;		
@@ -148,24 +148,11 @@ public class QEstimator {
      * @return an array representing the output.
      */
     public double[] runInput(double[] input) {
-		double[] nextInput = input;
-        outputs[0] = input;
-        for (int layer = 1; layer <= this.outputLayer; layer++) { // for every hidden layer
-            for (int node = 0; node < this.sizes[layer]; node++) { // for every node
-                double currentWeights[] = this.weights[layer - 1][node];
-                double sum = this.biases[layer][node];
-                for (int k = 0; k < currentWeights.length; k++) { // for every connection
-                    sum += currentWeights[k] * nextInput[k];
-                }
-                if (layer < this.outputLayer) {
-                    outputs[layer][node] = 1 / (1 + Math.exp(-sum)); // logistic output
-                } else {
-                    outputs[layer][node] = sum; // for last output
-                }
-            }
-            nextInput = outputs[layer];
-        }
-        return outputs[outputLayer];
+		double[] toReturn = new double[1];
+		double yes = 10 - 12 / (1 + Math.exp(input[1] - 10));
+		double no = - 4 / (1 + Math.exp(10 - input[1]));
+		toReturn[0] = input[0] * yes + (1 - input[0]) * no;
+		return toReturn;
     }
 
     /**
