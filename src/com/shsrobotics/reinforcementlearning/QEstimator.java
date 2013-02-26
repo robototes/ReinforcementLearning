@@ -43,49 +43,7 @@ public class QEstimator {
 		shortTermMemory = 50000; // store last n values
 		data = new DataPoint[shortTermMemory];
 
-        this.sizes = new int[this.outputLayer + 1];
-        this.outputs = new double[this.outputLayer + 1][];
-        this.biases = new double[this.outputLayer + 1][];
-        this.deltas = new double[this.outputLayer + 1][];
-        this.errors = new double[this.outputLayer + 1][];
-        this.weights = new double[this.outputLayer + 1][][];
-        this.changes = new double[this.outputLayer + 1][][];		
-		
-		for (int layer = 0; layer <= this.outputLayer; layer++) {
-			if (layer == this.outputLayer) {
-				this.sizes[layer] = this.numberOfOutputs;
-			} else if 
-		}
-		
-		LayerType currentLayer;
-        for (int layer = 0; layer <= this.outputLayer; layer++) {
-			if (layer == 0) {
-				currentLayer = LayerType.inputLayer;
-			} else if (layer == outputLayer) {
-				currentLayer = LayerType.outputLayer;
-			} else {
-				currentLayer = LayerType.hiddenLayer;
-			}
-			
-			int size = this.sizes[layer];
-            this.outputs[layer] = zeros(size);
-			this.biases[layer] = rands(size, currentLayer);
-			this.deltas[layer] = zeros(size);
-			this.errors[layer] = zeros(size);	
-        }
-        for (int layer = 0; layer < this.outputLayer; layer++) {
-			if (layer == 0) {
-				currentLayer = LayerType.inputLayer;
-			} else if (layer == outputLayer) {
-				currentLayer = LayerType.outputLayer;
-			} else {
-				currentLayer = LayerType.hiddenLayer;
-			}
-            for (int node = 0; node < this.sizes[layer]; node++) {
-                this.weights[layer][node] = rands(this.sizes[layer - 1], currentLayer);				
-                this.changes[layer][node] = rands(this.sizes[layer - 1], currentLayer);				
-            }
-        }		
+		initialize();	
     }
 	
 	/**
@@ -108,53 +66,53 @@ public class QEstimator {
 		shortTermMemory = 50000; // store last n values
 		data = new DataPoint[shortTermMemory];
 
-        this.sizes = new int[this.outputLayer + 1];
-        this.outputs = new double[this.outputLayer + 1][];
-        this.biases = new double[this.outputLayer + 1][];
-        this.deltas = new double[this.outputLayer + 1][];
-        this.errors = new double[this.outputLayer + 1][];
-        this.weights = new double[this.outputLayer][][];
-        this.changes = new double[this.outputLayer][][];		
+        initialize();
+    }
+	
+	private void initialize() {
+		int totalSize = this.outputLayer + 1;
+        this.sizes = new int[totalSize];
+        this.outputs = new double[totalSize][];
+        this.biases = new double[totalSize][];
+        this.deltas = new double[totalSize][];
+        this.errors = new double[totalSize][];
+        this.weights = new double[totalSize][][];
+        this.changes = new double[totalSize][][];		
 		
 		LayerType currentLayer;
+		int hiddenLayerNodes = (int) (1.5 * numberOfInputs);
         for (int layer = 0; layer <= this.outputLayer; layer++) {
-			if (layer == 0) {
-				currentLayer = LayerType.inputLayer;
-			} else if (layer == outputLayer) {
-				currentLayer = LayerType.outputLayer;
-			} else {
-				currentLayer = LayerType.hiddenLayer;
+			currentLayer = getLayer(layer);
+			if (currentLayer == LayerType.inputLayer) {
+				this.sizes[layer] = this.numberOfInputs;
+			} else if (currentLayer == LayerType.hiddenLayer) {
+				this.sizes[layer] = hiddenLayerNodes;
+			} else if (currentLayer == LayerType.outputLayer) {
+				this.sizes[layer] = this.numberOfOutputs;
 			}
-            if (layer == this.outputLayer) {
-                this.outputs[layer] = zeros(this.numberOfOutputs);
-                this.biases[layer] = rands(this.numberOfOutputs, currentLayer);
-                this.deltas[layer] = zeros(this.numberOfOutputs);
-                this.errors[layer] = zeros(this.numberOfOutputs);
-                this.sizes[layer] = this.numberOfOutputs;	
-            } else {				
-                this.outputs[layer] = zeros(this.numberOfInputs);
-                this.biases[layer] = rands(this.numberOfInputs, currentLayer);
-                this.deltas[layer] = zeros(this.numberOfInputs);
-                this.errors[layer] = zeros(this.numberOfInputs);
-                this.sizes[layer] = this.numberOfInputs;					
-                this.weights[layer] = new double[this.numberOfInputs][];
-                this.changes[layer] = new double[this.numberOfInputs][];		
-            }
+		}
+		
+		for (int layer = 0; layer <= this.outputLayer; layer++) {
+			currentLayer = getLayer(layer);			
+			int size = this.sizes[layer];
+			
+            this.outputs[layer] = zeros(size);
+			this.deltas[layer] = zeros(size);
+			this.errors[layer] = zeros(size);
+			
+			if (currentLayer != LayerType.inputLayer) {				
+				this.biases[layer] = rands(size, currentLayer);
+				this.weights[layer] = new double[size][];
+				this.changes[layer] = new double[size][];
+				
+				for (int node = 0; node < this.sizes[layer]; node++) {
+					int previousSize = this.sizes[layer - 1];
+					this.weights[layer][node] = rands(previousSize, currentLayer);				
+					this.changes[layer][node] = zeros(previousSize);				
+				}
+			}
         }
-        for (int layer = 0; layer < this.outputLayer; layer++) {
-			if (layer == 0) {
-				currentLayer = LayerType.inputLayer;
-			} else if (layer == outputLayer) {
-				currentLayer = LayerType.outputLayer;
-			} else {
-				currentLayer = LayerType.hiddenLayer;
-			}
-            for (int node = 0; node < this.sizes[layer]; node++) {
-                this.weights[layer][node] = rands(this.sizes[layer + 1], currentLayer);				
-                this.changes[layer][node] = rands(this.sizes[layer + 1], currentLayer);				
-            }
-        }		
-    }
+	}
     
     /**
      * Set the learning rate.
@@ -240,11 +198,7 @@ public class QEstimator {
                 for (int k = 0; k < currentWeights.length; k++) { // for every connection
                     sum += currentWeights[k] * nextInput[k];
                 }
-                if (layer < this.outputLayer) {
-                    outputs[layer][node] = 1 / (1 + Math.exp(-sum)); // logistic output
-                } else {
-                    outputs[layer][node] = sum; // for last output
-                }
+                outputs[layer][node] = 1 / (1 + Math.exp(-sum)); // logistic output
             }
             nextInput = outputs[layer];
         }
@@ -284,8 +238,8 @@ public class QEstimator {
             double[] incoming = outputs[layer - 1];	
             for (int node = 0; node < this.sizes[layer]; node++) { // for every node
                 double currentDelta = deltas[layer][node]; // the next layers deltas (we are working backwards)
-                for (int k = 0; k < outputs[layer].length; k++) { // for each incoming connection
-                    double currentChange = this.changes[layer - 1][node][k];
+                for (int k = 0; k < incoming.length; k++) { // for each incoming connection
+                    double currentChange = this.changes[layer][node][k];
                     currentChange = (learningRate * currentDelta * incoming[k]) + momentum * currentChange;
                     changes[layer][node][k] = currentChange;
                     weights[layer][node][k] += currentChange;

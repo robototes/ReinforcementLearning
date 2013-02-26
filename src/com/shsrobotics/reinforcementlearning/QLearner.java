@@ -26,7 +26,7 @@ public class QLearner {
     private String[] stateNames;
     private String[] actionNames;
     
-    private ErsatzEstimator qEstimator;
+    private QEstimator qEstimator;
 	
 	private int iterations;
     
@@ -56,8 +56,9 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new ErsatzEstimator(this.states + this.actions, this.states, 1, learningRate);
+        qEstimator = new QEstimator(this.states + this.actions, this.states, 1, learningRate);
 		qEstimator.setShortTermMemory((int) (5 * Math.ceil(1 / (1 - learnerAccuracy))));
+		qEstimator.setIterations(50);
     }
     
     /**
@@ -105,6 +106,16 @@ public class QLearner {
         
         return new Action(actionValues);
     }
+	
+	/**
+	 * Estimate a Q-Value.
+	 * @param state the state parameters.
+	 * @param action the action parameters.
+	 * @return
+	 */
+	public Q estimateQ(State state, Action action) {
+		return new Q(qEstimator.runInput(join(state.getRaw(), action.getRaw())));
+	}
 	
 	/**
 	 * Update the {@link QEstimator} Q values.
@@ -176,6 +187,8 @@ public class QLearner {
 		averageReward = 0.0;
 		totalReward = 0.0;
 	}
+	
+	
     
     /**
      * A mode that the {@link QLearner} can operate in
@@ -206,6 +219,8 @@ public class QLearner {
         }
     }
     
+	
+	
     /**
      * Actions available, represented by key-value pairs.
      */
@@ -229,7 +244,12 @@ public class QLearner {
          * @return The value associated with the key.
          */
         public double get(String key) {
-            return parameters[indexOf(key, actionNames)];
+			int index = indexOf(key, actionNames);
+			if (index == -1) {
+				return Double.POSITIVE_INFINITY;
+			} else {
+				return parameters[index];
+			}
         }
 		
 		/**
@@ -276,6 +296,17 @@ public class QLearner {
 		}
     }
     
+	/**
+	 * Holds Q-Values
+	 */
+	public class Q {
+		public double Q;
+		
+		protected Q(double[] estimatorOutput) {
+			Q = estimatorOutput[0];
+		}
+	}
+	
     /**
      * Finds the  value from an array of string keys
      * @param value the value to look for.
@@ -290,6 +321,7 @@ public class QLearner {
         return -1; // not found
     }
     
+	
     /**
      * Fill double array with value
      * @param value the value to fill the array with.
@@ -304,6 +336,8 @@ public class QLearner {
         return toReturn;
     }
 	
+	
+	
 	private double getPrimaryLearningRate() {
 		return (Math.log10(iterations) / iterations);
 	}
@@ -311,6 +345,7 @@ public class QLearner {
 	private double getSecondaryLearningRate() {
 		return (90.0 / (100.0 + iterations));
 	}
+	
 	
 	
 	/**
@@ -351,7 +386,13 @@ public class QLearner {
 		return toReturn;
 	}
     
-    public double[] average(double[] a, double[] b) {
+    /**
+	 * Average two arrays.
+	 * @param a first array.
+	 * @param b second array.
+	 * @return the averaged result.
+	 */
+	private double[] average(double[] a, double[] b) {
         if (a.length != b.length) {
             throw new Error("Mismatch lengths");
         }
@@ -361,6 +402,8 @@ public class QLearner {
         }
         return toReturn;
     }
+	
+	
 	
 	/**
 	 * Create a state.
@@ -380,6 +423,8 @@ public class QLearner {
 		return new Action(arg);
 	}
 	
+	
+	
 	/**
      * Fill an array with random action values
      * @param size the size of the array
@@ -392,12 +437,5 @@ public class QLearner {
                 toReturn[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
         }
         return toReturn;
-    }
-	
-	public double runInput(double number, double action) {
-		double yes = 10 - 12 / (1 + Math.exp(number - 10));
-		double no = - 4 / (1 + Math.exp(10 - number));
-		double toReturn = action * yes + (1 - action) * no;
-		return toReturn;
     }
 }
