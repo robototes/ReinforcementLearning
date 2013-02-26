@@ -256,7 +256,7 @@ public class QEstimator {
      * @return The random weight.
      */
     private double randomWeight(LayerType layer) {
-		double base = 0.4 * Math.random() - 0.2; // default for hidden and output layers
+		double base = 0.5 * Math.random() - 0.25; // default for hidden and output layers
 		if (layer == LayerType.inputLayer) {
 			base /= 2; // allows for non-scaled inputs to be accepted into network more easily.
 		}	

@@ -24,10 +24,10 @@ public class Test {
 		learner.minimumStateValues = minState;
 		learner.maximumStateValues = maxState;
         
-        learner.setLearningRate(0.95);
-		learner.setAccuracy(0.85);
+        learner.setLearningRate(1.0);
+		learner.setAccuracy(0.5);
 		
-		for (int i = 0; i < 500; i++) { // 100 learning iterations
+		for (int i = 0; i < 50000; i++) { // 100 learning iterations
 			if (Math.random() < 0.7) {
 				people++;
 			}
@@ -90,7 +90,7 @@ public class Test {
 		} else {
 		//	System.out.println("Did not open a new line when " + people + " people were in line.");
 			if (people <= 10) {
-				return 0.1;
+				return 0.2;
 			} else {
 				return 0;
 			}

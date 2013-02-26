@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class TestNN {
     public static void main(String[] args) {
-        QEstimator estimator = new QEstimator(2, 2, 1, 0.2);
+        QEstimator estimator = new QEstimator(2, 1, 1, 0.2);
         estimator.setShortTermMemory(20);
         estimator.setIterations(15);
 		Random random = new Random(1234567890);
@@ -13,7 +13,6 @@ public class TestNN {
             double[] output = {(input[0] + input[1] > 5) ? 1 : 0};
             estimator.addDataPoint(new DataPoint(input, output));
             estimator.train();
-			System.out.println(estimator.runInput(input)[0]);
         }		
 		double[] input = {3, 3};
 		System.out.println(Math.round(estimator.runInput(input)[0]) == 1 ? "Yes" : "No");

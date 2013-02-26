@@ -36,7 +36,7 @@ public class QLearner {
     public QLearner(String[] actions, String[] states) {
         currentMode = Mode.kLearn;
         learningRate = 0.2;
-		discountFactor = 0.6;
+		discountFactor = 0.4;
         learnerAccuracy = 0.9;
         stateNames = states;
         actionNames = actions;
@@ -51,8 +51,8 @@ public class QLearner {
         minimumActionValues = fill(0.0, this.actions); // array of minimums for action parameters
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
-        //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new QEstimator(this.states + this.actions, this.states + this.actions, 1, 0.5, 0.2);
+        //Create a neural network
+        qEstimator = new QEstimator(this.states + this.actions, (int) Math.ceil(Math.sqrt(this.states)), 1, 0.5, 0.2);
 		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
 		qEstimator.setIterations(2);
     }
@@ -107,7 +107,7 @@ public class QLearner {
 			* estimateQ(newState, requestAction(newState)).Q - estimatedQ);	
 		
 		double[] output = {reward};
-		qEstimator.setLearningRate(Math.sqrt(aK));
+	//	qEstimator.setLearningRate(Math.sqrt(aK));
 		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
         qEstimator.train();
 		iterations++;
@@ -242,7 +242,12 @@ public class QLearner {
          * @return The value associated with the key.
          */
         public double get(String key) {
-            return parameters[indexOf(key, stateNames)];
+           int index = indexOf(key, stateNames);
+			if (index == -1) {
+				return Double.POSITIVE_INFINITY;
+			} else {
+				return parameters[index];
+			}
         }
 		
 		/**
