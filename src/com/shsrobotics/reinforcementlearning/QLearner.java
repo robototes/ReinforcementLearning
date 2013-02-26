@@ -11,9 +11,6 @@ public class QLearner {
     private double learningRate;
 	private double discountFactor;
     private double learnerAccuracy;
-	private double averageReward;
-	private double totalReward;
-	private double totalTime;
 	
 	private final double step = 0.001;
     
@@ -46,11 +43,6 @@ public class QLearner {
         this.states = states.length;
         this.actions = actions.length; 
 		
-		iterations = 1;
-		averageReward = 0.0;
-		totalReward = 0.0;
-		totalTime = 0.0;
-        
         // assume 0 to 1 for ranges
         minimumStateValues = fill(0.0, this.states); // array of minimums for state parameters
         maximumStateValues = fill(1.0, this.states); // array of maximums for state parameters
@@ -59,8 +51,8 @@ public class QLearner {
         
         //Create a neural network with the same number of hidden layers as inputs
         qEstimator = new QEstimator(this.states + this.actions, this.states + this.actions, 1, 0.5, 0.2);
-		qEstimator.setShortTermMemory((int) (5 * Math.ceil(1 / (1 - learnerAccuracy))));
-		qEstimator.setIterations(5);
+		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
+		qEstimator.setIterations(2);
     }
     
     /**
@@ -105,26 +97,18 @@ public class QLearner {
 	 * @param action the action taken.
 	 * @param reward the reward gained.
 	 * @param newState the new state transitioned to.
-	 * @param transitionDelay the time for transition. For a Markov Decision Process, use transitionDelay = 0.
 	 */
-	public void updateQFactors(State state, Action action, double reward, double transitionDelay) {
+	public void updateQFactors(State state, Action action, State newState, double reward) {
 		double aK = getPrimaryLearningRate();
 		double bK = getSecondaryLearningRate();
-		double q = (1 - aK) * qEstimator.runInput(join(state.getRaw(), action.getRaw()))[0]
-			+ aK * (reward - discountFactor * averageReward * transitionDelay);	
-		
-		totalReward += reward;
-		totalTime += transitionDelay;
-		
-		double divisor = (totalTime == 0) ? iterations : totalTime;
-		
-		averageReward = (1 - bK) * averageReward + bK * (totalReward / divisor);
+		double estimatedQ = estimateQ(state, action).Q;
+		double q = (1 - aK) * estimatedQ
+			+ aK * (reward + discountFactor * estimateQ(newState, requestAction(newState)).Q - estimatedQ);	
 		
 		double[] output = {reward};
-		qEstimator.setLearningRate(Math.sqrt(aK));
+		qEstimator.setLearningRate(2 * Math.sqrt(aK));
 		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
         qEstimator.train();
-        iterations++;
 	}
     
     /**
@@ -160,17 +144,7 @@ public class QLearner {
         learnerAccuracy = accuracy;		
 		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
     }
-	
-	/**
-	 * Reset the {@link QLearner} by setting the iterations to 0;
-	 */
-	public void reset() {
-		iterations = 0;
-		averageReward = 0.0;
-		totalReward = 0.0;
-	}
-	
-	
+		
     
     /**
      * A mode that the {@link QLearner} can operate in
