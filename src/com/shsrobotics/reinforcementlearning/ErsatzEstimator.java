@@ -11,6 +11,7 @@ public class ErsatzEstimator {
     private final int outputLayer;    
     
     private double learningRate;
+	private double momentum;
 
     private int[] sizes;
     private double[][] biases;
@@ -26,16 +27,69 @@ public class ErsatzEstimator {
 
     /**
      * <h1>Q-Value Estimator</h1>
-     * @param inputs the number of input parameters
-     * @param outputs the number of output parameters
-     * @param hiddenLayers the number of hidden layers
-     * @param learningRate the learning rate
+     * @param inputs the number of input parameters.
+     * @param outputs the number of output parameters.
+     * @param hiddenLayers the number of hidden layers.
+     * @param learningRate the learning rate.
      */
     protected ErsatzEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
         this.numberOfInputs = inputs;
         this.numberOfOutputs = outputs;
         this.hiddenLayers = hiddenLayers;		
         this.learningRate = hiddenLayers;
+        this.outputLayer = 1 + this.hiddenLayers;
+		
+		momentum = 0.01;
+		iterations = 20;
+		shortTermMemory = 50000; // store last n values
+		data = new DataPoint[shortTermMemory];
+
+        this.sizes = new int[this.outputLayer + 1];
+        this.outputs = new double[this.outputLayer + 1][];
+        this.biases = new double[this.outputLayer + 1][];
+        this.deltas = new double[this.outputLayer + 1][];
+        this.errors = new double[this.outputLayer + 1][];
+        this.weights = new double[this.outputLayer][][];
+        this.changes = new double[this.outputLayer][][];
+        for (int layer = 0; layer <= this.outputLayer; layer++) {
+            if (layer == this.outputLayer) {
+                this.outputs[layer] = zeros(this.numberOfOutputs);
+                this.biases[layer] = rands(this.numberOfOutputs);
+                this.deltas[layer] = zeros(this.numberOfOutputs);
+                this.errors[layer] = zeros(this.numberOfOutputs);
+                this.sizes[layer] = this.numberOfOutputs;	
+            } else {				
+                this.outputs[layer] = zeros(this.numberOfInputs);
+                this.biases[layer] = rands(this.numberOfInputs);
+                this.deltas[layer] = zeros(this.numberOfInputs);
+                this.errors[layer] = zeros(this.numberOfInputs);
+                this.sizes[layer] = this.numberOfInputs;					
+                this.weights[layer] = new double[this.numberOfInputs][];
+                this.changes[layer] = new double[this.numberOfInputs][];		
+            }
+        }
+        for (int layer = 0; layer < this.outputLayer; layer++) {
+            for (int node = 0; node < this.sizes[layer]; node++) {
+                this.weights[layer][node] = rands(this.sizes[layer + 1]);				
+                this.changes[layer][node] = rands(this.sizes[layer + 1]);				
+            }
+        }		
+    }
+	
+	/**
+     * <h1>Q-Value Estimator</h1>
+     * @param inputs the number of input parameters.
+     * @param outputs the number of output parameters.
+     * @param hiddenLayers the number of hidden layers.
+     * @param learningRate the learning rate.
+	 * @param momentum the adjustment momentum.
+     */
+    protected ErsatzEstimator(int inputs, int hiddenLayers, int outputs, double learningRate, double momentum) {
+        this.numberOfInputs = inputs;
+        this.numberOfOutputs = outputs;
+        this.hiddenLayers = hiddenLayers;		
+        this.learningRate = hiddenLayers;
+		this.momentum = momentum;
         this.outputLayer = 1 + this.hiddenLayers;
 		
 		iterations = 20;
@@ -190,7 +244,7 @@ public class ErsatzEstimator {
                 double currentDelta = deltas[layer][node]; // the next layers deltas (we are working backwards)
                 for (int k = 0; k < outputs[layer].length; k++) { // for each incoming connection
                     double currentChange = this.changes[layer - 1][node][k];
-                    currentChange = (learningRate * currentDelta * incoming[k]);
+                    currentChange = (learningRate * currentDelta * incoming[k]) + momentum * currentChange;
                     changes[layer - 1][node][k] = currentChange;
                     weights[layer - 1][node][k] += currentChange;
                 }
