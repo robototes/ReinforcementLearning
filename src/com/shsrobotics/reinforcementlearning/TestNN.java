@@ -15,7 +15,7 @@ public class TestNN {
             estimator.train();
 			System.out.println(estimator.runInput(input)[0]);
         }		
-		double[] input = {2, 3};
+		double[] input = {3, 3};
 		System.out.println(Math.round(estimator.runInput(input)[0]) == 1 ? "Yes" : "No");
     }
 }

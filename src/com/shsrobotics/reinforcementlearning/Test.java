@@ -35,7 +35,9 @@ public class Test {
 			State state = learner.getState(environment);
 			Action action = learner.requestAction(state);
 			double reward = preformAction(action);
-			learner.updateQFactors(state, action, reward, 0.0);
+			double[] newEnvironment = {people};
+			State newState = learner.getState(newEnvironment);
+			learner.updateQFactors(state, action, newState, reward);
 		}
 		people = 0;			
 		learner.setMode(QLearner.Mode.kAct);	

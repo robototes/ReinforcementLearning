@@ -43,6 +43,8 @@ public class QLearner {
         this.states = states.length;
         this.actions = actions.length; 
 		
+		iterations = 1;
+		
         // assume 0 to 1 for ranges
         minimumStateValues = fill(0.0, this.states); // array of minimums for state parameters
         maximumStateValues = fill(1.0, this.states); // array of maximums for state parameters
@@ -100,15 +102,15 @@ public class QLearner {
 	 */
 	public void updateQFactors(State state, Action action, State newState, double reward) {
 		double aK = getPrimaryLearningRate();
-		double bK = getSecondaryLearningRate();
 		double estimatedQ = estimateQ(state, action).Q;
-		double q = (1 - aK) * estimatedQ
-			+ aK * (reward + discountFactor * estimateQ(newState, requestAction(newState)).Q - estimatedQ);	
+		double q = (1 - aK) * estimatedQ + aK * (reward + discountFactor 
+			* estimateQ(newState, requestAction(newState)).Q - estimatedQ);	
 		
 		double[] output = {reward};
-		qEstimator.setLearningRate(2 * Math.sqrt(aK));
+		qEstimator.setLearningRate(Math.sqrt(aK));
 		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
         qEstimator.train();
+		iterations++;
 	}
     
     /**
@@ -293,15 +295,13 @@ public class QLearner {
     }
 	
 	
-	
+	/**
+	 * Learning rate that decays over time
+	 * @return the learning rate.
+	 */
 	private double getPrimaryLearningRate() {
 		return (Math.log10(iterations) / iterations);
-	}
-	
-	private double getSecondaryLearningRate() {
-		return (90.0 / (100.0 + iterations));
-	}
-	
+	}	
 	
 	
 	/**
