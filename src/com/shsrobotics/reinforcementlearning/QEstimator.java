@@ -1,7 +1,9 @@
 package com.shsrobotics.reinforcementlearning;
 
 /**
- * Estimates Q Values using a neural network for use in a {@link QLearner}
+ * <h1>Q Estimator</h1>
+ * <h2>Estimates Q Values using a neural network for use in a {@link QLearner}</h2>
+ * Different from a normal neural network because we learn from estimates of correct Q-Values, not guaranteed accurate values.
  */
 public class QEstimator {
 	
@@ -198,7 +200,7 @@ public class QEstimator {
                 for (int k = 0; k < currentWeights.length; k++) { // for every connection
                     sum += currentWeights[k] * nextInput[k];
                 }
-                outputs[layer][node] = 1 / (1 + Math.exp(-sum)); // logistic output
+                outputs[layer][node] = 1 / (1 + Math.exp(-sum)); // logistic output 
             }
             nextInput = outputs[layer];
         }
@@ -254,11 +256,9 @@ public class QEstimator {
      * @return The random weight.
      */
     private double randomWeight(LayerType layer) {
-		double base = Math.random() - 0.5; // default for hidden layers
+		double base = 0.4 * Math.random() - 0.2; // default for hidden and output layers
 		if (layer == LayerType.inputLayer) {
-			base /= 10;
-		} else if (layer == LayerType.outputLayer) {
-			base *= 10;
+			base /= 2; // allows for non-scaled inputs to be accepted into network more easily.
 		}	
 		return base;
     }
@@ -307,7 +307,7 @@ public class QEstimator {
 	}
 
 	private static class LayerType {
-		private int type;
+		private int type; // allows use of == to check types.
 		
 		public static final LayerType inputLayer = new LayerType(1);
 		public static final LayerType hiddenLayer = new LayerType(2);

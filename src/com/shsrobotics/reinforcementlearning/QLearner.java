@@ -9,6 +9,7 @@ public class QLearner {
     private Mode currentMode;
     
     private double learningRate;
+	private double discountFactor;
     private double learnerAccuracy;
 	private double averageReward;
 	private double totalReward;
@@ -38,6 +39,7 @@ public class QLearner {
     public QLearner(String[] actions, String[] states) {
         currentMode = Mode.kLearn;
         learningRate = 0.2;
+		discountFactor = 0.6;
         learnerAccuracy = 0.9;
         stateNames = states;
         actionNames = actions;
@@ -56,9 +58,9 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network with the same number of hidden layers as inputs
-        qEstimator = new QEstimator(this.states + this.actions, this.states, 1, learningRate);
+        qEstimator = new QEstimator(this.states + this.actions, this.states + this.actions, 1, 0.5, 0.2);
 		qEstimator.setShortTermMemory((int) (5 * Math.ceil(1 / (1 - learnerAccuracy))));
-		qEstimator.setIterations(50);
+		qEstimator.setIterations(5);
     }
     
     /**
@@ -81,27 +83,7 @@ public class QLearner {
         if (Math.random() < exploreCutoff) { // choose random values
             actionValues = rands();
         } else {
-			double accuracyIterations = Math.ceil(1 / (1 - learnerAccuracy)); // turn the accuracy into a number of iterations
-			double[] currentAction = rands();
-            for (int i = 0; i < accuracyIterations; i++) {
-				//find gradient
-                double[] gradient = new double[this.actions]; // partial derivative for each action parameter				
-				for (int action = 0; action < this.actions; action++) {
-					double[] test = new double[this.actions];
-                    System.arraycopy(currentAction, 0, test, 0, this.actions);
-					test[action] += step;
-					double difference = qEstimator.runInput(join(state.getRaw(), test))[0] - 
-						qEstimator.runInput(join(state.getRaw(), currentAction))[0];
-                    gradient[action] = difference / step; // calculate partial derivative
-				}
-				//apply gradient
-				for (int action = 0; action < this.actions; action++) {
-					currentAction[action] += gradient[action];
-				}
-            }
-            for (int action = 0; action < this.actions; action++) {
-                actionValues[action] += currentAction[action];
-            }
+			
         }
         
         return new Action(actionValues);
@@ -129,7 +111,7 @@ public class QLearner {
 		double aK = getPrimaryLearningRate();
 		double bK = getSecondaryLearningRate();
 		double q = (1 - aK) * qEstimator.runInput(join(state.getRaw(), action.getRaw()))[0]
-			+ aK * (reward - averageReward * transitionDelay);	
+			+ aK * (reward - discountFactor * averageReward * transitionDelay);	
 		
 		totalReward += reward;
 		totalTime += transitionDelay;
