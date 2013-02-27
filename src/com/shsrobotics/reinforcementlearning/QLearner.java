@@ -1,5 +1,7 @@
 package com.shsrobotics.reinforcementlearning;
 
+import com.shsrobotics.reinforcementlearning.util.DataPoint;
+
 /**
  * <h1>Reinforcement Learning Q Learner</h1>
  * Learns how to act based on rewards.
@@ -22,7 +24,7 @@ public class QLearner {
     private String[] stateNames;
     private String[] actionNames;
     
-    private ErsatzEstimator qEstimator;
+    private NeuralNetworkQEstimator qEstimator;
 	
 	private int iterations;
 	
@@ -55,7 +57,7 @@ public class QLearner {
         maximumActionValues = fill(1.0, this.actions); // array of maximums for action parameters
         
         //Create a neural network
-        qEstimator = new ErsatzEstimator(this.states + this.actions, (int) Math.ceil(Math.sqrt(this.states)), 1, 0.5, 0.2);
+        qEstimator = new NeuralNetworkQEstimator(this.states + this.actions, (int) Math.ceil(Math.sqrt(this.states)), 1, 0.5, 0.2);
 		qEstimator.setShortTermMemory((int) Math.ceil(1 / (1 - learnerAccuracy)));
 		qEstimator.setIterations(2);
     }
@@ -171,7 +173,7 @@ public class QLearner {
 	}
 	
 	/**
-	 * Update the {@link ErsatzEstimator} Q values.
+	 * Update the {@link NeuralNetworkQEstimator} Q values.
 	 * @param state the old state.
 	 * @param action the action taken.
 	 * @param reward the reward gained.

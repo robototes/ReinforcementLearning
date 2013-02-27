@@ -1,5 +1,7 @@
-package com.shsrobotics.reinforcementlearning;
+package com.shsrobotics.reinforcementlearning.test;
 
+import com.shsrobotics.reinforcementlearning.NeuralNetworkQEstimator;
+import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Random;
 
 public class TestNN {

@@ -1,5 +1,6 @@
-package com.shsrobotics.reinforcementlearning;
+package com.shsrobotics.reinforcementlearning.test;
 
+import com.shsrobotics.reinforcementlearning.QLearner;
 import com.shsrobotics.reinforcementlearning.QLearner.Action;
 import com.shsrobotics.reinforcementlearning.QLearner.State;
 import java.util.Scanner;

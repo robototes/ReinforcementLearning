@@ -1,4 +1,4 @@
-package com.shsrobotics.reinforcementlearning;
+package com.shsrobotics.reinforcementlearning.util;
 
 /**
  * A data point, to be used with a {@link QEstimator}.
