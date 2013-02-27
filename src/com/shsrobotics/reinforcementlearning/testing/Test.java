@@ -1,4 +1,4 @@
-package com.shsrobotics.reinforcementlearning.test;
+package com.shsrobotics.reinforcementlearning.testing;
 
 import com.shsrobotics.reinforcementlearning.QLearner;
 import com.shsrobotics.reinforcementlearning.QLearner.Action;
