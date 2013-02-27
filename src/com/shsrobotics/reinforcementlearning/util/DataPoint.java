@@ -4,7 +4,14 @@ package com.shsrobotics.reinforcementlearning.util;
  * A data point, to be used with a {@link QEstimator}.
  */
 public class DataPoint {
+	/**
+	 * The domain.
+	 */
 	public double[] input;
+	
+	/**
+	 * The range.
+	 */
 	public double[] output;
 	
 	/**
