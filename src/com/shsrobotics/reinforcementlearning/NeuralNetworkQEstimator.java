@@ -5,7 +5,7 @@ package com.shsrobotics.reinforcementlearning;
  * <h2>Estimates Q Values using a neural network for use in a {@link QLearner}</h2>
  * Different from a normal neural network because we learn from estimates of correct Q-Values, not guaranteed accurate values.
  */
-public class QEstimator {
+public class NeuralNetworkQEstimator {
 	
     private final int hiddenLayers;
     private final int numberOfOutputs;
@@ -34,7 +34,7 @@ public class QEstimator {
      * @param hiddenLayers the number of hidden layers
      * @param learningRate the learning rate
      */
-    protected QEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
+    protected NeuralNetworkQEstimator(int inputs, int hiddenLayers, int outputs, double learningRate) {
         this.numberOfInputs = inputs;
         this.numberOfOutputs = outputs;
         this.hiddenLayers = hiddenLayers;		
@@ -56,7 +56,7 @@ public class QEstimator {
      * @param learningRate the learning rate.
 	 * @param momentum the adjustment momentum.
      */
-    protected QEstimator(int inputs, int hiddenLayers, int outputs, double learningRate, double momentum) {
+    protected NeuralNetworkQEstimator(int inputs, int hiddenLayers, int outputs, double learningRate, double momentum) {
         this.numberOfInputs = inputs;
         this.numberOfOutputs = outputs;
         this.hiddenLayers = hiddenLayers;		

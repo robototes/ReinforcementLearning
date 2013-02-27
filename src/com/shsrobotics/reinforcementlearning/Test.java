@@ -25,9 +25,9 @@ public class Test {
 		learner.maximumStateValues = maxState;
         
         learner.setLearningRate(1.0);
-		learner.setAccuracy(0.5);
+		learner.setAccuracy(0.9);
 		
-		for (int i = 0; i < 50000; i++) { // 100 learning iterations
+		for (int i = 0; i < 50; i++) { // 100 learning iterations
 			if (Math.random() < 0.7) {
 				people++;
 			}
@@ -42,22 +42,7 @@ public class Test {
 		people = 0;			
 		learner.setMode(QLearner.Mode.kAct);	
 		
-		double[] testState = {12};
-		double[] testState2 = {13};
-		double[] testAction = {1};
-		double predictionA = learner.estimateQ(
-			learner.getState(testState), 
-			learner.getAction(testAction)
-			).Q;
-		double predictionB = learner.estimateQ(
-			learner.getState(testState2), 
-			learner.getAction(testAction)
-			).Q;
-		System.out.println(predictionA);
-		System.out.println(predictionB);
-		
 		while (true) {
-			break;
 			System.out.println(people + " customers.  Press A to add customer, R to remove customer, E to exit, and Enter to simulate.");
 			String input = scanner.nextLine().toLowerCase();
 			switch (input) {
@@ -73,26 +58,28 @@ public class Test {
 			double[] environment = {people};
 			State state = learner.getState(environment);			
 			Action action = learner.requestAction(state);			
-			double reward = preformAction(action);			
-			learner.updateQFactors(state, action, reward, 0.0);		
+			double reward = preformAction(action);				
+			double[] newEnvironment = {people};
+			State newState = learner.getState(newEnvironment);
+			learner.updateQFactors(state, action, newState, reward);		
             System.out.println(action.get("Open new line"));
 		}
 	}
 	
 	public static double preformAction(Action action) {
 		if (Math.round(action.get("Open new line")) == 1) {
-		//	System.out.println("Opened a new line when " + people + " people were in line.");
+			System.out.println("Opened a new line when " + people + " people were in line.");
 			if (people-- > 10) {
-				return 0.8;
+				return 10;
 			} else {
-				return 0;
+				return -2;
 			}	
 		} else {
-		//	System.out.println("Did not open a new line when " + people + " people were in line.");
+			System.out.println("Did not open a new line when " + people + " people were in line.");
 			if (people <= 10) {
-				return 0.2;
-			} else {
 				return 0;
+			} else {
+				return -4;
 			}
 		}
 	}

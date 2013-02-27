@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class TestNN {
     public static void main(String[] args) {
-        QEstimator estimator = new QEstimator(2, 1, 1, 0.2);
+        NeuralNetworkQEstimator estimator = new NeuralNetworkQEstimator(2, 1, 1, 0.2);
         estimator.setShortTermMemory(20);
         estimator.setIterations(15);
 		Random random = new Random(1234567890);

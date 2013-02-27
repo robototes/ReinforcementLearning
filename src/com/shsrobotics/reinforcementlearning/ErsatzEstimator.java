@@ -202,11 +202,22 @@ public class ErsatzEstimator {
      * @return an array representing the output.
      */
     public double[] runInput(double[] input) {
-		double[] toReturn = new double[1];
-		double yes = 10 - 12 / (1 + Math.exp(input[1] - 10));
-		double no = - 4 / (1 + Math.exp(10 - input[1]));
-		toReturn[0] = input[0] * yes + (1 - input[0]) * no;
-		return toReturn;
+		double[] reward = new double[1];
+		int people = (int) input[0];
+		if (Math.round(input[1]) == 1) {
+			if (people-- > 10) {
+				reward[0] = 10;
+			} else {
+				reward[0] = -2;
+			}	
+		} else {
+		if (people <= 10) {
+				reward[0] = 0;
+			} else {
+				reward[0] = -4;
+			}
+		}
+		return reward;
     }
 
     /**
