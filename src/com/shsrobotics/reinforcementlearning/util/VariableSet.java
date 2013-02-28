@@ -1,8 +1,8 @@
 package com.shsrobotics.reinforcementlearning.util;
 
 public class VariableSet {
-	String[] keys;
-	double[] values;
+	private String[] keys;
+	private double[] values;
 	
 	/**
 	 * A set of variables to be run through a decision tree.
@@ -14,6 +14,7 @@ public class VariableSet {
 		this.values = values;
 	}
 	
+		
 	/**
 	 * Get the value associated with a key
 	 * @param key the key.
@@ -29,6 +30,22 @@ public class VariableSet {
 	 */
 	public void set(String key, double value) {
 		values[indexOf(key)] = value;
+	}
+	
+	/**
+	 * Get all of the keys.
+	 * @return the keys.
+	 */
+	public String[] getKeys() {
+		return keys;
+	}
+	
+	/**
+	 * Get all of the keys.
+	 * @return the values.
+	 */
+	public double[] getValues() {
+		return values;
 	}
 	
 	/**

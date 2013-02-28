@@ -36,6 +36,22 @@ public class Node {
 		this.output = output;
 		isLeaf = false;
 	}
+	
+	/**
+	 * Get the Yes node.
+	 * @return the node.
+	 */
+	protected Node getPositiveChild() {
+		return yes;
+	}
+	
+	/**
+	 * Get the No node.
+	 * @return the node.
+	 */
+	protected Node getNegativeChild() {
+		return no;
+	}
 
 	protected double get(double input) {
 		if (isLeaf) {
