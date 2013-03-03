@@ -49,9 +49,9 @@ public class QLearner {
 	private int iterations;
     
     /**
-     *  Accepts string array of action values and environment state parameters
-     * @param actions
-     * @param states
+     * Accepts string array of action values and environment state parameters
+     * @param actions the action parameters. 
+     * @param states the state parameters.
      */
     public QLearner(String[] actions, String[] states) {
         currentMode = Mode.kLearn;
@@ -81,8 +81,8 @@ public class QLearner {
     /**
      * Request action given current state. <br />
      * For use in Learn and Act modes.
-     * @param state
-     * @return
+     * @param state the current environment state.
+     * @return the best action to maximize long-term reward.
      */
     public Action requestAction(State state) {
         double exploreCutoff = learningRate;        
@@ -158,7 +158,7 @@ public class QLearner {
      *      <li>Learn: Explore environment, act on data, but don't always choose best choice.</li>
      *      <li>Act: Act on data, choose best choice.</li>
      * </ul>
-     * @param mode
+     * @param mode the new mode.
      */
     public void setMode(Mode mode) {
         currentMode = mode;
@@ -167,7 +167,7 @@ public class QLearner {
     /**
      * Sets Learning rate. <br />
      * A higher learning rate will mean more choices are chosen randomly.
-     * @param rate
+     * @param rate the new rate.
      */
     public void setLearningRate(double rate) {
         learningRate = rate;
@@ -178,7 +178,7 @@ public class QLearner {
     /**
      * Sets the Q maximization algorithm accuracy. <br />
      * A higher value will increase accuracy at the cost of computation time.
-     * @param accuracy
+     * @param accuracy the new accuracy.
      */
     public void setAccuracy(double accuracy) {
         learnerAccuracy = accuracy;		
