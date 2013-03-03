@@ -2,10 +2,7 @@ package com.shsrobotics.reinforcementlearning;
 
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import com.shsrobotics.reinforcementlearning.util.Optimizer;
-import com.sun.org.omg.SendingContext._CodeBaseImplBase;
 import java.lang.reflect.Method;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * <h1>Reinforcement Learning Q Learner</h1>
