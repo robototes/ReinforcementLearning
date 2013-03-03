@@ -4,6 +4,10 @@ import com.shsrobotics.reinforcementlearning.NeuralNetworkQEstimator;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Random;
 
+/**
+ * Test class.
+ * @author Team 2412.
+ */
 public class TestNN {
 	public static final String[] inputKeys = {"A", "B"};
 	public static final String[] outputKeys = {"Yes/No"};

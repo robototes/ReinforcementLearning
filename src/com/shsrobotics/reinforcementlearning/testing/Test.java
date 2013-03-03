@@ -5,6 +5,10 @@ import com.shsrobotics.reinforcementlearning.QLearner.Action;
 import com.shsrobotics.reinforcementlearning.QLearner.State;
 import java.util.Scanner;
 
+/**
+ * Test class.
+ * @author Team 2412.
+ */
 public class Test {	
 	static int people = 0;
 	

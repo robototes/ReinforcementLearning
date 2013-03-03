@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 
 /**
  * Optimize coordinates based on the Nelder-Mead (Simplex) Algorithm.
+ * @author Team 2412.
  */
 public class Optimizer {
 	private final int n; // the data dimensions

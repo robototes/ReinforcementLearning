@@ -3,9 +3,8 @@ package com.shsrobotics.reinforcementlearning;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 
 /**
- * <h1>Q Estimator</h1>
- * <h2>Estimates Q Values using a neural network for use in a {@link QLearner}</h2>
- * Different from a normal neural network because we learn from estimates of correct Q-Values, not guaranteed accurate values.
+ * Estimates Q Values using a neural network for use in a {@link QLearner}.
+ * @author Team 2412.
  */
 public class NeuralNetworkQEstimator {
 	
@@ -146,8 +145,8 @@ public class NeuralNetworkQEstimator {
 	}
 
     /**
-     * Add a data point to the set and train the network on it.
-     * @param data the data point to be added.
+     * Add a {@link DataPoint} to the set and train the network on it.
+     * @param data the {@link DataPoint} to be added.
      */
     public void addDataPoint(DataPoint newData) {
         if (newData.getInputs().length != numberOfInputs) {
@@ -160,7 +159,7 @@ public class NeuralNetworkQEstimator {
     }
 
     /**
-     * Train the network on a series of data points.
+     * Train the network on a series of {@link DataPoint}s.
      * @param data the data points to train with.
      */
     public void train(DataPoint[] newData) {
@@ -171,7 +170,7 @@ public class NeuralNetworkQEstimator {
     }
 	
 	/**
-     * Train the network on stored data points.
+     * Train the network on stored {@link DataPoint}s.
      */
     public void train() {
         for (int i = 0; i < iterations; i++) {
@@ -210,7 +209,7 @@ public class NeuralNetworkQEstimator {
     }
 
     /**
-     * Calculate the error gradient across the network.
+     * Calculate the error gradient across the {@link NeuralNetworkQEstimator}.
      * @param target the array of output values expected.
      */
     private void calculateDeltas(double[] target) {
@@ -235,7 +234,7 @@ public class NeuralNetworkQEstimator {
     }
 
     /**
-     * Adjust the weights of the network, based on the error gradient.
+     * Adjust the weights of the {@link NeuralNetworkQEstimator}, based on the error gradient.
      */
     private void adjustWeights() {
         for (int layer = 1; layer <= this.outputLayer; layer++) { // for every layer			
@@ -279,8 +278,8 @@ public class NeuralNetworkQEstimator {
     }
 
     /**
-     * Fill an array with random weights
-     * @param size the size of the array
+     * Fill an array with random weights.
+     * @param size the size of the array.
      * @return The array.
      */
     private double[] rands(int size, LayerType layer) {
@@ -291,6 +290,13 @@ public class NeuralNetworkQEstimator {
         return toReturn;
     }
 	
+	/**
+	 * Extract part of a set of {@link DataPoint}s.
+	 * @param array the {@link DataPoint}s.
+	 * @param a starting index (inclusive).
+	 * @param b ending index (exclusive).
+	 * @return the extracted array segment.
+	 */
 	private DataPoint[] slice(DataPoint[] array, int a, int b) {
 		DataPoint[] toReturn = new DataPoint[b - a];
 		for (int i = 0; i < b - a; i++) {
@@ -299,6 +305,12 @@ public class NeuralNetworkQEstimator {
 		return toReturn;
 	}
 	
+	/**
+	 * Add a new data point to a series of {@link DataPoint}s.
+	 * @param array the current array.
+	 * @param toAdd the {@link DataPoint} to add.
+	 * @return the new {@link DataPoint}s.
+	 */
 	private DataPoint[] shift(DataPoint[] array, DataPoint toAdd) {
 		DataPoint[] toReturn = new DataPoint[shortTermMemory];
 		for (int i = 1; i < shortTermMemory; i++) {
@@ -308,6 +320,14 @@ public class NeuralNetworkQEstimator {
 		return toReturn;
 	}
 
+	/**
+	 * Enumeration of layer types.
+	 * <ul>
+	 *	<li>{@code inputLayer} the input layer.</li>
+	 *	<li>{@code hiddenLayer} hidden layers.</li>
+	 *	<li>{@code outputLayer} the output layer.</li>
+	 * </ul>
+	 */
 	private static class LayerType {
 		private int type; // allows use of == to check types.
 		
@@ -316,10 +336,15 @@ public class NeuralNetworkQEstimator {
 		public static final LayerType outputLayer = new LayerType(3);
 		
 		private LayerType(int type) {
-			this.type = type;
+			this.type = type; // for use of ==
 		}
 	}
 	
+	/**
+	 * Based on the integer index of the current layer, get the {@link LayerType}.
+	 * @param layer the layer index.
+	 * @return the {@link LayerType}.
+	 */
 	private LayerType getLayer(int layer) {
 		LayerType toReturn = LayerType.hiddenLayer;
 		if (layer == 0) {

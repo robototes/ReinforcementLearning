@@ -1,5 +1,10 @@
 package com.shsrobotics.reinforcementlearning.util;
 
+/**
+ * A set of key-value pairs for inputs and outputs.
+ * Used for optimizers and estimators.
+ * @author Team 2412.
+ */
 public class DataPoint {
 	private String[] inputKeys;
 	private double[] input;
@@ -7,7 +12,7 @@ public class DataPoint {
 	private double[] output;
 	
 	/**
-	 * A set of variables to be run through a decision tree.
+	 * A set of variables.
 	 * @param inputKeys the input keys.
 	 * @param input the input values.
 	 * @param outputKeys  the output keys.

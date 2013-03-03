@@ -2,6 +2,7 @@ package com.shsrobotics.reinforcementlearning.util;
 
 /**
  * A decision node in a decision tree.
+ * @author Team 2412.
  */
 public class Node {
 	private Node yes;

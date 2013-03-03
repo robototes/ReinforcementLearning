@@ -5,9 +5,8 @@ import com.shsrobotics.reinforcementlearning.util.Optimizer;
 import java.lang.reflect.Method;
 
 /**
- * <h1>Reinforcement Learning Q Learner</h1>
  * Learns how to act based on rewards.
- * @author Team 2412
+ * @author Team 2412.
  */
 public class QLearner {
     private Mode currentMode;
@@ -16,10 +15,25 @@ public class QLearner {
 	private double discountFactor;
     private double learnerAccuracy;
     
-    public double[] minimumStateValues;
-    public double[] minimumActionValues;
-    public double[] maximumStateValues;
-    public double[] maximumActionValues;
+    /**
+	 * Minimum state parameter values.
+	 */
+	public double[] minimumStateValues;
+	
+    /**
+	 * Minimum action parameter values.
+	 */
+	public double[] minimumActionValues;
+	
+    /**
+	 * Maximum state parameter values.
+	 */
+	public double[] maximumStateValues;
+	
+    /**
+	 * Maximum action parameter values.
+	 */
+	public double[] maximumActionValues;
     
     private int states;
     private int actions;
@@ -173,7 +187,7 @@ public class QLearner {
 		
     
     /**
-     * A mode that the {@link QLearner} can operate in
+     * A mode that the {@link QLearner} can operate in.
      */
     public static class Mode { 
         
@@ -284,9 +298,12 @@ public class QLearner {
     }
     
 	/**
-	 * Holds Q-Values
+	 * Holds Q-Values.
 	 */
 	public class Q {
+		/**
+		 * The Q-Value.
+		 */
 		public double Q;
 		
 		protected Q(double[] estimatorOutput) {

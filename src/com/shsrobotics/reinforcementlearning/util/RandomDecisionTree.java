@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 
 /**
  * A Decision tree for use in random forests.
+ * @author Team 2412.
  */
 public class RandomDecisionTree {
 	private static Node root;
