@@ -33,6 +33,8 @@ public class Optimizer {
 		this.maximums = maximums;
 	}
 	
+	
+	
 	/**
 	 * Maximize the fitness function output for a set of coordinates.
 	 * @param function the fitness function.
@@ -189,6 +191,8 @@ public class Optimizer {
 		return toReturn;
 	}
 
+	
+	
 	/**
 	 * A data point.  Used for optimization
 	 */
@@ -231,6 +235,7 @@ public class Optimizer {
         return toReturn;
     }	
 
+	
 	/**
      * Fill an array with random action values
      * @param size the size of the array
@@ -257,6 +262,7 @@ public class Optimizer {
         }
         return toReturn;
     }
+	
 	
 	/**
 	 * Run the fitness function.
