@@ -1,6 +1,11 @@
 package com.shsrobotics.reinforcementlearning;
 
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
+import com.shsrobotics.reinforcementlearning.util.Optimizer;
+import com.sun.org.omg.SendingContext._CodeBaseImplBase;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * <h1>Reinforcement Learning Q Learner</h1>
@@ -23,15 +28,14 @@ public class QLearner {
     private int actions;
     private String[] stateNames;
     private String[] actionNames;
+	private String[] inputKeys;
+	private String[] outputKeys = {"Q-Value"};
     
     private NeuralNetworkQEstimator qEstimator;
+	private Optimizer qOptimizer;
+	private double[] optimizerState;
 	
 	private int iterations;
-	
-	private double NelderMeadReflectionCoefficient = 1;
-	private double NelderMeadExpansionCoefficient = 2;
-	private double NelderMeadContractionCoefficient = -1 / 2;
-	private double NelderMeadShrinkCoefficient = 1 / 2;
     
     /**
      *  Accepts string array of action values and environment state parameters
@@ -45,6 +49,7 @@ public class QLearner {
         learnerAccuracy = 0.9;
         stateNames = states;
         actionNames = actions;
+		inputKeys = join(states, actions);
         this.states = states.length;
         this.actions = actions.length; 
 		
@@ -83,66 +88,14 @@ public class QLearner {
             actionValues = rands();
         } else {
 			int accuracyIterations = (int) Math.ceil(1 / (1 - learnerAccuracy));
-			Point[] vertices = new Point[actions + 1]; // simplex vertices
+			qOptimizer = new Optimizer(actions, accuracyIterations, minimumActionValues, maximumActionValues);
 			
-			for (int i = 0; i < vertices.length; i++) {
-				vertices[i] = new Point(rands(), state);
-			}			
-			vertices = sort(vertices); // sort according to value
-			
-			for (int i = 0; i < accuracyIterations; i++) {					
-				//calculate CG/centroid of simplex
-				double[] centroid = zeros(actions);
-				
-				for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
-					double cgSum = 0.0;
-					for (int k = 0; k < actions; k++) { 
-						cgSum += vertices[vertex].coordinates[k];
-					}
-					centroid[vertex] = cgSum / (vertices.length + 1);
-				}			
-				Point worst = vertices[actions];
-				
-				double[] reflectedPoint = new double[actions];
-				double[] expandedPoint = new double[actions];
-				double[] contractedPoint = new double[actions];
-				for (int j = 0; j < actions; j++) {
-					double difference = (centroid[j] - worst.coordinates[j]);
-					reflectedPoint[j] = centroid[j] + NelderMeadReflectionCoefficient * difference;
-					expandedPoint[j] = centroid[j] + NelderMeadExpansionCoefficient * difference;
-					contractedPoint[j] = centroid[j] + NelderMeadContractionCoefficient * difference;
-				}
-				
-				double reflectedValue = estimateQ(state, new Action(reflectedPoint)).Q;
-				double expandedValue = estimateQ(state, new Action(expandedPoint)).Q;
-				double contractedValue = estimateQ(state, new Action(contractedPoint)).Q;
-				if (vertices[0].value >= reflectedValue && reflectedValue > vertices[actions - 1].value) { // worst than best but better than second-best
-					vertices[actions] = new Point(reflectedPoint, state); // replace worst with new reflected point
-					continue; // next iteration
-				} else if (reflectedValue > vertices[0].value) { // better than best
-					if (expandedValue > reflectedValue) {
-						vertices[actions] = new Point(expandedPoint, state); // replace worst with new expanded point
-						continue; // next iteration
-					} else {
-						vertices[actions] = new Point(reflectedPoint, state); // replace worst with new reflected point
-						continue; // next iteration
-					}
-				} else if (reflectedValue <= vertices[actions].value && contractedValue > worst.value) { // worst than second-best
-					vertices[actions] = new Point(contractedPoint, state); // replace worst with new contracted point
-					continue; //next iteration
-				} else {
-					for (int j = 1; j < vertices.length; j++) { // for all but best use reduced point						
-						double[] reducedPoint = new double[actions];
-						for (int k = 0; k < actions; k++) {
-							double difference = (centroid[k] - worst.coordinates[k]);
-							reducedPoint[k] = centroid[k] + NelderMeadShrinkCoefficient * difference;
-						}
-						vertices[j] = new Point(reducedPoint, state);
-					}
-				}							
-				vertices = sort(vertices); // sort according to value
-			}
-			actionValues = vertices[0].coordinates;
+			try {
+				Method function = getClass().getMethod("optimizerEstimateQ", (Class<?>) null);
+				actionValues = qOptimizer.maximize(function);	
+			} catch (	NoSuchMethodException | SecurityException ex) {
+				actionValues = zeros(actions);
+			}					
         }
         
         return new Action(actionValues);
@@ -159,17 +112,12 @@ public class QLearner {
 	}
 	
 	/**
-	 * Estimate multiple Q-Value.
-	 * @param state the state parameters.
+	 * Estimate a Q-Value for the optimizer.
 	 * @param action the action parameters.
-	 * @return an array of estimated Q-Values.
+	 * @return the estimated Q-Value.
 	 */
-	private double[] estimateQs(State state, double[][] action) {
-		double[] toReturn = new double[action.length];
-		for (int i = 0; i < action.length; i++) {
-			toReturn[i] = qEstimator.runInput(join(state.getRaw(), action[i]))[0];
-		}
-		return toReturn;
+	private double optimizerEstimateQ(double[] action) {
+		return qEstimator.runInput(join(optimizerState, action))[0];
 	}
 	
 	/**
@@ -186,7 +134,8 @@ public class QLearner {
 			* estimateQ(newState, requestAction(newState)).Q - estimatedQ);	
 		
 		double[] output = {reward};
-		qEstimator.addDataPoint(new DataPoint(join(state.getRaw(), action.getRaw()), output));
+		double[] input = join(state.getRaw(), action.getRaw());
+		qEstimator.addDataPoint(new DataPoint(inputKeys, input, outputKeys, output));
         qEstimator.train();
 		iterations++;
 	}
@@ -348,23 +297,6 @@ public class QLearner {
 		}
 	}
 	
-	/**
-	 * A data point.  Used for optimization
-	 */
-	private final class Point {
-		public double[] coordinates;
-		public double value;
-		
-		/**
-		 * Create a point.
-		 * @param coordinates the action coordinates.
-		 * @param state the Q-Value from the coordinates.
-		 */
-		public Point(double[] coordinates, State state)	{
-			this.coordinates = coordinates;
-			value = estimateQ(state, new Action(coordinates)).Q;
-		}
-	}
 	
     /**
      * Finds the  value from an array of string keys
@@ -411,9 +343,9 @@ public class QLearner {
 	 * @param b
 	 * @return 
 	 */
-	private DataPoint[] join(DataPoint[] a, DataPoint[] b) {
+	private String[] join(String[] a, String[] b) {
 		int length = a.length + b.length;
-		DataPoint[] toReturn = new DataPoint[length];
+		String[] toReturn = new String[length];
 		for (int i = 0; i < length; i++) {
 			if (i > a.length - 1) {
 				toReturn[i] = b[i - a.length];
@@ -443,29 +375,7 @@ public class QLearner {
 		return toReturn;
 	}
     
-    /**
-	 * Sort an array.
-	 * @param a the array.
-	 * @return the sorted result.
-	 */
-	private Point[] sort(Point[] a) {
-		double maximum = Double.NEGATIVE_INFINITY;
-		int minIndex = -1;		
-		boolean[] usedIndices = new boolean[a.length];
-        Point[] toReturn = new Point[a.length];
-        for (int i = 0; i < a.length; i++) {
-			for (int j = 0; j < a.length; j++) {
-				if (usedIndices[j] == true) continue;
-				if (a[j].value > maximum) {
-					minIndex = j;
-					maximum = a[j].value;
-					usedIndices[j] = true;
-				}			
-			}
-			toReturn[i] = a[minIndex];
-        }
-        return toReturn;
-    }	
+    
 	
 	
 	/**

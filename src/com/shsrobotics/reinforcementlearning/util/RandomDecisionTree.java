@@ -6,7 +6,7 @@ package com.shsrobotics.reinforcementlearning.util;
 public class RandomDecisionTree {
 	private static Node root;
 	private static Node lastUsedNode;
-	private VariableSet[] data;
+	private DataPoint[] data;
 	private double[] averages;
 	private String[] variables;
 	private int variableSubset;
@@ -14,22 +14,19 @@ public class RandomDecisionTree {
 	boolean[] usedVariables = new boolean[numberOfVariables]; // list of used variables while building tree
 	
 	private static final double LOG_2 = Math.log10(2.0);
-	private int maxDepth;
-	private int currentDepth;
 	
 	/**
 	 * Create a decision tree.
 	 * @param data the decision tree data.
 	 */
-	public RandomDecisionTree(VariableSet[] data, int variableSubset) {
+	public RandomDecisionTree(DataPoint[] data, int variableSubset) {
 		this.data = data;
 		this.variableSubset = variableSubset;
-		this.maxDepth = (int) (Math.log(variableSubset) / LOG_2 + 1); // maximum possible depth
-		this.numberOfVariables = data[0].getKeys().length;
+		this.numberOfVariables = data[0].getInputKeys().length;
 		
 		averages = zeros(data.length); // find averages for splitting
 		for (int example = 0; example < data.length; example++) {
-			double[] dataExample = data[example].getValues();
+			double[] dataExample = data[example].getInputs();
 			for (int variable = 0; variable < numberOfVariables; variable++) {
 				averages[variable] += dataExample[variable] / data.length;					
 			}
@@ -37,22 +34,16 @@ public class RandomDecisionTree {
 		
 		root = new Node(0.0);
 		lastUsedNode = root;
-		currentDepth = 0;
-		buildTree(); // start building tree
+		buildTree(data); // start building tree
 	}
 	
 	/**
 	 * Build the tree
 	 * @param data 
 	 */
-	private void buildTree() {
-		variables = data[0].getKeys();
-		
-		if (contains(usedVariables, false) || currentDepth == maxDepth) { // if all variables have been used
-			maxDepth--;
-			return;
-		}
-			
+	private void buildTree(DataPoint[] dataSubset) {
+		variables = dataSubset[0].getInputKeys();
+							
 		double maximumGain = Double.POSITIVE_INFINITY;
 		int maxGainIndex = -1;
 		int totalCount = 0;
@@ -67,20 +58,7 @@ public class RandomDecisionTree {
 				usedVariables[randIndex] = true;
 			}
 
-			int yes = 0;
-			for (int example = 0; example < data.length; example++) {
-				if (data[example].get(variables[randIndex]) > averages[variable]) {
-					yes++;
-				}
-			}
-			double proportionY = yes / data.length;
-			double proportionN = 1 - yes / data.length;
-
-			double variableEntropy = -(proportionY * Math.log10(proportionY) - proportionN * Math.log10(proportionN)) / LOG_2;				
-			if (variableEntropy > maximumGain) {
-				maxGainIndex = variable;
-				maximumGain = variableEntropy;
-			}
+			
 		}
 
 		for (int variable = 0; variable < variableSubset; variable++) { // reset array of used values for unused values
@@ -88,15 +66,22 @@ public class RandomDecisionTree {
 				usedVariables[variable] = false;
 			}
 		}
-
+		
+		double cutoff = 0.0;
+		int variableIndex = 0;
+		
+		// find what data passes cutoff filter
+		DataPoint[] positiveSubset = getDataSubset(dataSubset, cutoff, true, variables[variableIndex]);
+		DataPoint[] negativeSubset = getDataSubset(dataSubset, cutoff, false, variables[variableIndex]);
+		
 		//extend tree
 		Node yes = new Node(1.0); // yes
 		Node no = new Node(0.0); // no
 		lastUsedNode.addChildren(yes, no, averages[maxGainIndex]);
 		
-		lastUsedNode = yes; currentDepth++; buildTree(); // build subtree for yes branch
+		lastUsedNode = yes; buildTree(positiveSubset); // build subtree for yes branch
 		
-		lastUsedNode = no; currentDepth++; buildTree(); // build subtree for no branch
+		lastUsedNode = no; buildTree(negativeSubset); // build subtree for no branch
 	}
 	
 	/**
@@ -135,4 +120,18 @@ public class RandomDecisionTree {
         }
         return false; // not found
     }
+
+	private DataPoint[] getDataSubset(DataPoint[] currentData, double cutoff, boolean positiveNode, String key) {
+		DataPoint[] toReturn = null;
+		for (int i = 0; i < currentData.length; i++) {
+			double value = currentData[i].getInput(key);
+			if (value > cutoff && positiveNode) {
+				toReturn[i] = currentData[i];
+			}
+			if (value <= cutoff && !positiveNode) {
+				toReturn[i] = currentData[i];
+			}
+		}
+		return toReturn;
+	}
 }

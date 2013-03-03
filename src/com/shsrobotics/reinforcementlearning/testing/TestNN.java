@@ -5,6 +5,8 @@ import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Random;
 
 public class TestNN {
+	public static final String[] inputKeys = {"A", "B"};
+	public static final String[] outputKeys = {"Yes/No"};
     public static void main(String[] args) {
         NeuralNetworkQEstimator estimator = new NeuralNetworkQEstimator(2, 1, 1, 0.2);
         estimator.setShortTermMemory(20);
@@ -13,7 +15,7 @@ public class TestNN {
         for (int i = 0; i < 20; i++) {
             double[] input = {random.nextInt(6), random.nextInt(6)};
             double[] output = {(input[0] + input[1] > 5) ? 1 : 0};
-            estimator.addDataPoint(new DataPoint(input, output));
+            estimator.addDataPoint(new DataPoint(inputKeys, input, outputKeys, output));
             estimator.train();
         }		
 		double[] input = {3, 3};

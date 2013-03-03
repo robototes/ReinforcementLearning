@@ -150,10 +150,10 @@ public class NeuralNetworkQEstimator {
      * @param data the data point to be added.
      */
     public void addDataPoint(DataPoint newData) {
-        if (newData.input.length != numberOfInputs) {
+        if (newData.getInputs().length != numberOfInputs) {
             throw new Error("Incorrect number of inputs.");
         }
-        if (newData.output.length != numberOfOutputs) {
+        if (newData.getOutputs().length != numberOfOutputs) {
             throw new Error("Incorrect number of outputs.");
         }
 		data = shift(data, newData);
@@ -179,8 +179,8 @@ public class NeuralNetworkQEstimator {
                 if (data[j] == null) { // if not enough data has been entered
                     continue;
                 }
-                runInput(data[j].input);
-                calculateDeltas(data[j].output);                
+                runInput(data[j].getInputs());
+                calculateDeltas(data[j].getOutputs());                
                 adjustWeights();                
             }
         }
