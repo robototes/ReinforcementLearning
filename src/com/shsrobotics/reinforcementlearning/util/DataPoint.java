@@ -47,6 +47,7 @@ public class DataPoint {
 	/**
 	 * Set a key-value pair.
 	 * @param key the key.
+	 * @param value the value to set the key to. 
 	 */
 	public void set(String key, double value) {
 		input[indexOf(key)] = value;
