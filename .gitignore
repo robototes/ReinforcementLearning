@@ -6,4 +6,3 @@ j2meclasses/*
 *.jar
 *.class
 *.tmp
-/dist/javadoc/resources/
