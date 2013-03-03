@@ -6,3 +6,5 @@ j2meclasses/*
 *.jar
 *.class
 *.tmp
+
+/images/Thumbs.db
