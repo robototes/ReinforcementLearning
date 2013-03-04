@@ -89,8 +89,8 @@ public class QLearner {
         double[] actionValues = new double[actions];
         
         if (currentMode.chooseBestOption) { // check modes
-            exploreCutoff = 0.0;
-        }
+			exploreCutoff = 0.0;
+		}
         if (!currentMode.allowActionRequests) {
             throw new Error("Wrong learning mode.");
         }
