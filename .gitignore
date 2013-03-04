@@ -7,4 +7,4 @@ j2meclasses/*
 *.class
 *.tmp
 
-/images/Thumbs.db
+Thumbs.db
