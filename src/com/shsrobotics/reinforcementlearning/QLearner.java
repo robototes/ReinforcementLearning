@@ -473,17 +473,4 @@ public class QLearner {
         }
         return toReturn;
     }
-	
-	/**
-     * Fill an array with zeros
-     * @param size the size of the array
-     * @return The array.
-     */
-    private double[] zeros(int size) {
-        double[] toReturn = new double[size];
-        for (int i = 0; i < size; i++) {
-                toReturn[i] = 0;
-        }
-        return toReturn;
-    }
 }
