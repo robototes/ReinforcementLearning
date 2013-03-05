@@ -5,10 +5,26 @@ package com.shsrobotics.reinforcementlearning.util;
  * @author Team 2412.
  */
 public class Node {
+	/**
+	 * The node to go to when the input exceeds the cutoff.
+	 */
 	private Node yes;
+	/**
+	 * The node to go to when the input fails to meet the cutoff.
+	 */
 	private Node no;
+	/**
+	 * The input cutoff.
+	 */
 	private double inputCutoff;
+	/**
+	 * The output value (for a leaf).
+	 */
 	private double output;
+	/**
+	 * Whether or not the node is acting as a leaf.
+	 * Represents whether or not the node has children.
+	 */
 	private boolean isLeaf = false;
 
 	/**

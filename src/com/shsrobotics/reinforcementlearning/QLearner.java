@@ -9,43 +9,86 @@ import java.lang.reflect.Method;
  * @author Team 2412.
  */
 public class QLearner {
+	/**
+	 * The {@link Mode} the learner is operating in.
+	 */
     private Mode currentMode;
     
-    private double learningRate;
+	/**
+	 * Controls the portion of the time the learner is exploring vs exploiting.
+	 * A rate of 0.2 is recommended, allowing for exploration randomly but also
+	 * exploration through intelligent action.
+	 */
+    private double learningRate;	
+	/**
+	 * Controls how much value is placed on future rewards.
+	 * A higher value will place more emphasis on future rewards.
+	 */
 	private double discountFactor;
+	/**
+	 * How accurate the maximization of reward should be.
+	 * Higher accuracy comes at the cost of more computation time.
+	 */
     private double learnerAccuracy;
     
     /**
 	 * Minimum state parameter values.
 	 */
-	public double[] minimumStateValues;
-	
+	public double[] minimumStateValues;	
     /**
 	 * Minimum action parameter values.
 	 */
-	public double[] minimumActionValues;
-	
+	public double[] minimumActionValues;	
     /**
 	 * Maximum state parameter values.
 	 */
-	public double[] maximumStateValues;
-	
+	public double[] maximumStateValues;	
     /**
 	 * Maximum action parameter values.
 	 */
 	public double[] maximumActionValues;
     
+	/**
+	 * The number of state parameters.
+	 */
     private int states;
+	/**
+	 * The number of action parameters.
+	 */
     private int actions;
+	/**
+	 * A list of state parameter names.
+	 */
     private String[] stateNames;
+	/**
+	 * A list of action parameter names.
+	 */
     private String[] actionNames;
+	
+	/**
+	 * String keys that represent state and action values.
+	 * This is a joined array of {@code stateNames} and {@code actionNames}.
+	 */
 	private String[] inputKeys;
+	/**
+	 * String key that represents the output value from the Q Estimator.
+	 */
 	private String[] outputKeys = {"Q-Value"};
     
+	/**
+	 * An Artificial Neural Network that estimates Q-Values.
+	 */
     private NeuralNetworkQEstimator qEstimator;
+	/**
+	 * An optimizer/maximizer that maximizes Q-Values by changing 
+	 * action parameters.
+	 */
 	private Optimizer qOptimizer;
-	private double[] optimizerState;
 	
+	/**
+	 * How many times the Q-Learner has had updated Q-Values.
+	 * In practice, this will increment many times a second.
+	 */
 	private int iterations;
     
     /**
@@ -165,11 +208,24 @@ public class QLearner {
     }
     
     /**
-     * Sets Learning rate. <br />
+     * Sets Learning rate.
+	 * <p/>
      * A higher learning rate will mean more choices are chosen randomly.
      * @param rate the new rate.
      */
     public void setLearningRate(double rate) {
+        learningRate = rate;
+        qEstimator.setLearningRate(learningRate);
+    }
+	
+	/**
+     * Sets Discount factor.
+	 * <p/>
+     * A higher discount factor will mean more emphasis is placed on 
+	 * long-term reward.
+     * @param rate the new rate.
+     */
+    public void setDiscountFactor(double rate) {
         learningRate = rate;
         qEstimator.setLearningRate(learningRate);
     }

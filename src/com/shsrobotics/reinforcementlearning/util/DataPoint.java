@@ -6,9 +6,22 @@ package com.shsrobotics.reinforcementlearning.util;
  * @author Team 2412.
  */
 public class DataPoint {
+	/**
+	 * A list of input keys.
+	 */
 	private String[] inputKeys;
+	/**
+	 * Input values. These are matched with input keys.
+	 */
 	private double[] input;
+	
+	/**
+	 * A list of output keys.
+	 */
 	private String[] outputKeys;
+	/**
+	 * Output values. These are matched with output keys.
+	 */
 	private double[] output;
 	
 	/**

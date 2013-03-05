@@ -1,23 +1,45 @@
 package com.shsrobotics.reinforcementlearning.util;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 /**
  * Optimize coordinates based on the Nelder-Mead (Simplex) Algorithm.
  * @author Team 2412.
  */
-public class Optimizer {
-	private final int n; // the data dimensions
+public abstract class Optimizer {
+	/**
+	 * The number of variables to optimize.
+	 * Data dimensions.
+	 */
+	private final int n; 
+	/**
+	 * How many times to run the Nelder-Mead algorithm
+	 */
 	private final int iterations;
+	/**
+	 * Minimum variable values.
+	 * Used to choose random starting points.
+	 */
 	private final double[] minimums;
+	/**
+	 * Maximum Variable values.
+	 * Used to choose random starting points.
+	 */
 	private final double[] maximums;
 	
-	private Method function;
-	
+	/**
+	 * Constant for Reflected point.
+	 */
 	private double NelderMeadReflectionCoefficient = 1;
+	/**
+	 * Constant for Expanded point.
+	 */
 	private double NelderMeadExpansionCoefficient = 2;
+	/**
+	 * Constant for Contracted point.
+	 */
 	private double NelderMeadContractionCoefficient = -1 / 2;
+	/**
+	 * Constant for Reduced point.
+	 */
 	private double NelderMeadShrinkCoefficient = 1 / 2;
 	
 	/**
@@ -41,75 +63,69 @@ public class Optimizer {
 	 * @param function the fitness function.
 	 * @return the maximized coordinates.
 	 */
-	public double[] maximize(Method function) {
-		this.function = function;
+	double[] maximize() {
 		double[] toReturn = zeros();
-		
-		try {
-			Point[] vertices = new Point[n + 1]; // simplex vertices
+		Point[] vertices = new Point[n + 1]; // simplex vertices
 
-			for (int i = 0; i < vertices.length; i++) {
-				double[] input = rands();
-				vertices[i] = new Point(input, (double) f(input));
-			}			
-			vertices = sort(vertices); // sort according to value
+		for (int i = 0; i < vertices.length; i++) {
+			double[] input = rands();
+			vertices[i] = new Point(input, (double) f(input));
+		}			
+		vertices = sort(vertices); // sort according to value
 
-			for (int i = 0; i < iterations; i++) {					
-				//calculate CG/centroid of simplex
-				double[] centroid = zeros();
+		for (int i = 0; i < iterations; i++) {					
+			//calculate CG/centroid of simplex
+			double[] centroid = zeros();
 
-				for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
-					double cgSum = 0.0;
-					for (int k = 0; k < n; k++) { 
-						cgSum += vertices[vertex].coordinates[k];
-					}
-					centroid[vertex] = cgSum / (vertices.length + 1);
-				}			
-				Point worst = vertices[n];
-
-				double[] reflectedPoint = new double[n];
-				double[] expandedPoint = new double[n];
-				double[] contractedPoint = new double[n];
-				for (int j = 0; j < n; j++) {
-					double difference = (centroid[j] - worst.coordinates[j]);
-					reflectedPoint[j] = centroid[j] + NelderMeadReflectionCoefficient * difference;
-					expandedPoint[j] = centroid[j] + NelderMeadExpansionCoefficient * difference;
-					contractedPoint[j] = centroid[j] + NelderMeadContractionCoefficient * difference;
+			for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
+				double cgSum = 0.0;
+				for (int k = 0; k < n; k++) { 
+					cgSum += vertices[vertex].coordinates[k];
 				}
+				centroid[vertex] = cgSum / (vertices.length + 1);
+			}			
+			Point worst = vertices[n];
 
-				double reflectedValue = f(reflectedPoint);
-				double expandedValue = f(expandedPoint);
-				double contractedValue = f(contractedPoint);
-				if (vertices[0].value >= reflectedValue && reflectedValue > vertices[n - 1].value) { // worst than best but better than second-best
+			double[] reflectedPoint = new double[n];
+			double[] expandedPoint = new double[n];
+			double[] contractedPoint = new double[n];
+			for (int j = 0; j < n; j++) {
+				double difference = (centroid[j] - worst.coordinates[j]);
+				reflectedPoint[j] = centroid[j] + NelderMeadReflectionCoefficient * difference;
+				expandedPoint[j] = centroid[j] + NelderMeadExpansionCoefficient * difference;
+				contractedPoint[j] = centroid[j] + NelderMeadContractionCoefficient * difference;
+			}
+
+			double reflectedValue = f(reflectedPoint);
+			double expandedValue = f(expandedPoint);
+			double contractedValue = f(contractedPoint);
+			if (vertices[0].value >= reflectedValue && reflectedValue > vertices[n - 1].value) { // worst than best but better than second-best
+				vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
+				continue; // next iteration
+			} else if (reflectedValue > vertices[0].value) { // better than best
+				if (expandedValue > reflectedValue) {
+					vertices[n] = new Point(expandedPoint, f(expandedPoint)); // replace worst with new expanded point
+					continue; // next iteration
+				} else {
 					vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
 					continue; // next iteration
-				} else if (reflectedValue > vertices[0].value) { // better than best
-					if (expandedValue > reflectedValue) {
-						vertices[n] = new Point(expandedPoint, f(expandedPoint)); // replace worst with new expanded point
-						continue; // next iteration
-					} else {
-						vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
-						continue; // next iteration
+				}
+			} else if (reflectedValue <= vertices[n].value && contractedValue > worst.value) { // worst than second-best
+				vertices[n] = new Point(contractedPoint, f(contractedPoint)); // replace worst with new contracted point
+				continue; //next iteration
+			} else {
+				for (int j = 1; j < vertices.length; j++) { // for all but best use reduced point						
+					double[] reducedPoint = new double[n];
+					for (int k = 0; k < n; k++) {
+						double difference = (centroid[k] - worst.coordinates[k]);
+						reducedPoint[k] = centroid[k] + NelderMeadShrinkCoefficient * difference;
 					}
-				} else if (reflectedValue <= vertices[n].value && contractedValue > worst.value) { // worst than second-best
-					vertices[n] = new Point(contractedPoint, f(contractedPoint)); // replace worst with new contracted point
-					continue; //next iteration
-				} else {
-					for (int j = 1; j < vertices.length; j++) { // for all but best use reduced point						
-						double[] reducedPoint = new double[n];
-						for (int k = 0; k < n; k++) {
-							double difference = (centroid[k] - worst.coordinates[k]);
-							reducedPoint[k] = centroid[k] + NelderMeadShrinkCoefficient * difference;
-						}
-						vertices[j] = new Point(reducedPoint, f(reducedPoint));
-					}
-				}							
-				vertices = sort(vertices); // sort according to value
-			}
-			toReturn = vertices[0].coordinates;
-		} catch (IllegalAccessException ex) {
-		} catch (IllegalArgumentException ex) { 
-		} catch (InvocationTargetException ex) { }
+					vertices[j] = new Point(reducedPoint, f(reducedPoint));
+				}
+			}							
+			vertices = sort(vertices); // sort according to value
+		}
+		toReturn = vertices[0].coordinates;
 		
 		return toReturn;
 	}
@@ -119,75 +135,69 @@ public class Optimizer {
 	 * @param function the fitness function.
 	 * @return the minimized coordinates.
 	 */
-	public double[] minimize(Method function) {
-		this.function = function;
+	double[] minimize() {
 		double[] toReturn = zeros();
-		
-		try {
-			Point[] vertices = new Point[n + 1]; // simplex vertices
+		Point[] vertices = new Point[n + 1]; // simplex vertices
 
-			for (int i = 0; i < vertices.length; i++) {
-				double[] input = rands();
-				vertices[i] = new Point(input, (double) f(input));
-			}			
-			vertices = sort(vertices); // sort according to value
+		for (int i = 0; i < vertices.length; i++) {
+			double[] input = rands();
+			vertices[i] = new Point(input, (double) f(input));
+		}			
+		vertices = sort(vertices); // sort according to value
 
-			for (int i = 0; i < iterations; i++) {					
-				//calculate CG/centroid of simplex
-				double[] centroid = zeros();
+		for (int i = 0; i < iterations; i++) {					
+			//calculate CG/centroid of simplex
+			double[] centroid = zeros();
 
-				for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
-					double cgSum = 0.0;
-					for (int k = 0; k < n; k++) { 
-						cgSum += vertices[vertex].coordinates[k];
-					}
-					centroid[vertex] = cgSum / (vertices.length + 1);
-				}			
-				Point worst = vertices[n];
-
-				double[] reflectedPoint = new double[n];
-				double[] expandedPoint = new double[n];
-				double[] contractedPoint = new double[n];
-				for (int j = 0; j < n; j++) {
-					double difference = (centroid[j] - worst.coordinates[j]);
-					reflectedPoint[j] = centroid[j] + NelderMeadReflectionCoefficient * difference;
-					expandedPoint[j] = centroid[j] + NelderMeadExpansionCoefficient * difference;
-					contractedPoint[j] = centroid[j] + NelderMeadContractionCoefficient * difference;
+			for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
+				double cgSum = 0.0;
+				for (int k = 0; k < n; k++) { 
+					cgSum += vertices[vertex].coordinates[k];
 				}
+				centroid[vertex] = cgSum / (vertices.length + 1);
+			}			
+			Point worst = vertices[n];
 
-				double reflectedValue = f(reflectedPoint);
-				double expandedValue = f(expandedPoint);
-				double contractedValue = f(contractedPoint);
-				if (vertices[0].value <= reflectedValue && reflectedValue > vertices[n - 1].value) { // worst than best but better than second-best
+			double[] reflectedPoint = new double[n];
+			double[] expandedPoint = new double[n];
+			double[] contractedPoint = new double[n];
+			for (int j = 0; j < n; j++) {
+				double difference = (centroid[j] - worst.coordinates[j]);
+				reflectedPoint[j] = centroid[j] + NelderMeadReflectionCoefficient * difference;
+				expandedPoint[j] = centroid[j] + NelderMeadExpansionCoefficient * difference;
+				contractedPoint[j] = centroid[j] + NelderMeadContractionCoefficient * difference;
+			}
+
+			double reflectedValue = f(reflectedPoint);
+			double expandedValue = f(expandedPoint);
+			double contractedValue = f(contractedPoint);
+			if (vertices[0].value <= reflectedValue && reflectedValue > vertices[n - 1].value) { // worst than best but better than second-best
+				vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
+				continue; // next iteration
+			} else if (reflectedValue > vertices[0].value) { // better than best
+				if (expandedValue < reflectedValue) {
+					vertices[n] = new Point(expandedPoint, f(expandedPoint)); // replace worst with new expanded point
+					continue; // next iteration
+				} else {
 					vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
 					continue; // next iteration
-				} else if (reflectedValue > vertices[0].value) { // better than best
-					if (expandedValue < reflectedValue) {
-						vertices[n] = new Point(expandedPoint, f(expandedPoint)); // replace worst with new expanded point
-						continue; // next iteration
-					} else {
-						vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
-						continue; // next iteration
+				}
+			} else if (reflectedValue >= vertices[n].value && contractedValue > worst.value) { // worst than second-best
+				vertices[n] = new Point(contractedPoint, f(contractedPoint)); // replace worst with new contracted point
+				continue; //next iteration
+			} else {
+				for (int j = 1; j > vertices.length; j++) { // for all but best use reduced point						
+					double[] reducedPoint = new double[n];
+					for (int k = 0; k > n; k++) {
+						double difference = (centroid[k] - worst.coordinates[k]);
+						reducedPoint[k] = centroid[k] + NelderMeadShrinkCoefficient * difference;
 					}
-				} else if (reflectedValue >= vertices[n].value && contractedValue > worst.value) { // worst than second-best
-					vertices[n] = new Point(contractedPoint, f(contractedPoint)); // replace worst with new contracted point
-					continue; //next iteration
-				} else {
-					for (int j = 1; j > vertices.length; j++) { // for all but best use reduced point						
-						double[] reducedPoint = new double[n];
-						for (int k = 0; k > n; k++) {
-							double difference = (centroid[k] - worst.coordinates[k]);
-							reducedPoint[k] = centroid[k] + NelderMeadShrinkCoefficient * difference;
-						}
-						vertices[j] = new Point(reducedPoint, f(reducedPoint));
-					}
-				}							
-				vertices = sort(vertices); // sort according to value
-			}
-			toReturn = vertices[0].coordinates;
-		} catch (IllegalAccessException ex) {
-		} catch (IllegalArgumentException ex) { 
-		} catch (InvocationTargetException ex) { }
+					vertices[j] = new Point(reducedPoint, f(reducedPoint));
+				}
+			}							
+			vertices = sort(vertices); // sort according to value
+		}
+		toReturn = vertices[0].coordinates;
 		
 		return toReturn;
 	}
@@ -269,12 +279,6 @@ public class Optimizer {
 	 * Run the fitness function.
 	 * @param input the input values (domain).
 	 * @return the result (range).
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException 
 	 */
-	private double f(double[] input) throws IllegalAccessException, IllegalArgumentException, IllegalArgumentException, InvocationTargetException {
-		return (double) function.invoke(input);
-	}
+	protected abstract double f(double[] input);
 }
