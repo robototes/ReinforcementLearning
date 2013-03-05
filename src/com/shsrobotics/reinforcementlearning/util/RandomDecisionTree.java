@@ -62,7 +62,7 @@ public class RandomDecisionTree {
 	/**
 	 * Build the tree.
 	 * <p/>
-	 * @param data the data to build the tree with.
+	 * @param dataSubset the data to build the tree with.
 	 */
 	private void buildTree(DataPoint[] dataSubset) {
 		variables = dataSubset[0].getInputKeys();

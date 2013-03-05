@@ -101,7 +101,6 @@ public class DataPoint {
 	/**
      * Finds the  value from an array of string keys
      * @param value the value to look for.
-     * @param keys the array of string keys.
      */
     private int indexOf(String value) {
         for (int i = 0; i < inputKeys.length; i++) {

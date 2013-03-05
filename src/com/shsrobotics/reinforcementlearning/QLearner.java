@@ -365,6 +365,8 @@ public class QLearner {
      * Finds the  value from an array of string keys
      * @param value the value to look for.
      * @param keys the array of string keys.
+	 * @return the index that the value was found at.  Returns -1 if the value
+	 * was not found.
      */
     private int indexOf(String value, String[] keys) {
         for (int i = 0; i < keys.length; i++) {
@@ -380,7 +382,7 @@ public class QLearner {
      * Fill double array with value
      * @param value the value to fill the array with.
      * @param length the length of the array.
-     * @return
+     * @return the filled array.
      */
     private double[] fill(double value, int length) {
         double[] toReturn = new double[length];
@@ -404,7 +406,7 @@ public class QLearner {
 	 * Join two arrays
 	 * @param a
 	 * @param b
-	 * @return 
+	 * @return the joined array.
 	 */
 	private String[] join(String[] a, String[] b) {
 		int length = a.length + b.length;
@@ -423,7 +425,7 @@ public class QLearner {
 	 * Join two arrays
 	 * @param a
 	 * @param b
-	 * @return 
+	 * @return the joined array.
 	 */
 	private double[] join(double[] a, double[] b) {
 		int length = a.length + b.length;
@@ -461,7 +463,6 @@ public class QLearner {
 		
 	/**
      * Fill an array with random action values
-     * @param size the size of the array
      * @return The array.
      */
     private double[] rands() {

@@ -60,7 +60,6 @@ public abstract class Optimizer {
 	
 	/**
 	 * Maximize the fitness function output for a set of coordinates.
-	 * @param function the fitness function.
 	 * @return the maximized coordinates.
 	 */
 	public double[] maximize() {
@@ -132,7 +131,6 @@ public abstract class Optimizer {
 	
 	/**
 	 * Minimize the fitness function output for a set of coordinates.
-	 * @param function the fitness function.
 	 * @return the minimized coordinates.
 	 */
 	public double[] minimize() {
@@ -214,7 +212,7 @@ public abstract class Optimizer {
 		/**
 		 * Create a point.
 		 * @param coordinates the action coordinates.
-		 * @param state the Q-Value from the coordinates.
+		 * @param value the Q-Value from the coordinates.
 		 */
 		public Point(double[] coordinates, double value)	{
 			this.coordinates = coordinates;
@@ -249,7 +247,6 @@ public abstract class Optimizer {
 	
 	/**
      * Fill an array with random action values
-     * @param size the size of the array
      * @return The array.
      */
     private double[] rands() {
@@ -263,7 +260,6 @@ public abstract class Optimizer {
 	
 	/**
      * Fill an array with zeros
-     * @param size the size of the array
      * @return The array.
      */
     private double[] zeros() {

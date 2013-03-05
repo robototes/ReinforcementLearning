@@ -71,7 +71,7 @@ class VarianceMinimizer extends Optimizer {
 	/**
 	 * Calculate the variance of a node split.
 	 * <p/>
-	 * @param data the data to use.
+	 * @param split the cutoff value to split the data with.
 	 * @return the average of the variance for each branch.
 	 */
 	private double nodeVariance(double split) {
@@ -111,7 +111,6 @@ class VarianceMinimizer extends Optimizer {
 	/**
 	 * Find the data that would follow a branch after a decision node.
 	 * <p/>
-	 * @param currentData the data to isolate from.
 	 * @param cutoff the cutoff value.
 	 * @param positiveNode whether or not to test for successes ({@code true})
 	 * or failures ({@code false}).

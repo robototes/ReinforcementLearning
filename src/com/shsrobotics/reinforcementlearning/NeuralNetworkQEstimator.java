@@ -210,7 +210,7 @@ public class NeuralNetworkQEstimator {
 	/**
 	 * Add a {@link DataPoint} to the set and train the network on it.
 	 * <p/>
-	 * @param data the {@link DataPoint} to be added.
+	 * @param newData the {@link DataPoint} to be added.
 	 */
 	public void addDataPoint(DataPoint newData) {
 		if (newData.getInputs().length != numberOfInputs) {
@@ -225,7 +225,7 @@ public class NeuralNetworkQEstimator {
 	/**
 	 * Train the network on a series of {@link DataPoint}s.
 	 * <p/>
-	 * @param data the data points to train with.
+	 * @param newData the data points to train with.
 	 */
 	public void train(DataPoint[] newData) {
 		// replace data with new data
@@ -254,7 +254,7 @@ public class NeuralNetworkQEstimator {
 	/**
 	 * Make a prediction.
 	 * <p/>
-	 * @param nextInput the input array.
+	 * @param input the input array.
 	 * @return an array representing the output.
 	 */
 	public double[] runInput(double[] input) {
