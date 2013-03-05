@@ -1,4 +1,4 @@
 ReinforcementLearning
 =====================
 
-Javadoc for ReinforcementLearning project.
+Javadoc for the master branch of ReinforcementLearning project.
