@@ -2,7 +2,6 @@ package com.shsrobotics.reinforcementlearning;
 
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import com.shsrobotics.reinforcementlearning.util.Optimizer;
-import java.lang.reflect.Method;
 
 /**
  * Learns how to act based on rewards.
@@ -79,12 +78,7 @@ public class QLearner {
 	 * An Artificial Neural Network that estimates Q-Values.
 	 */
     private NeuralNetworkQEstimator qEstimator;
-	/**
-	 * An optimizer/maximizer that maximizes Q-Values by changing 
-	 * action parameters.
-	 */
-	private Optimizer qOptimizer;
-	
+		
 	/**
 	 * How many times the Q-Learner has had updated Q-Values.
 	 * In practice, this will increment many times a second.
@@ -127,7 +121,7 @@ public class QLearner {
      * @param state the current environment state.
      * @return the best action to maximize long-term reward.
      */
-    public Action requestAction(State state) {
+    public Action requestAction(final State state) {
         double exploreCutoff = learningRate;        
         double[] actionValues = new double[actions];
         
@@ -142,14 +136,21 @@ public class QLearner {
             actionValues = rands();
         } else {
 			int accuracyIterations = (int) Math.ceil(1 / (1 - learnerAccuracy));
-			qOptimizer = new Optimizer(actions, accuracyIterations, minimumActionValues, maximumActionValues);
 			
-			try {
-				Method function = getClass().getMethod("optimizerEstimateQ", (Class<?>) null);
-				actionValues = qOptimizer.maximize(function);	
-			} catch (	NoSuchMethodException | SecurityException ex) {
-				actionValues = zeros(actions);
-			}					
+			/* because so much of the overriden method depends on variables here, 
+			 * and the number of iterations changes each time, it makes more
+			 * sense to make a new class each time.
+			 */
+			actionValues = (new Optimizer(actions + states, accuracyIterations, 
+				join(minimumActionValues, minimumStateValues), 
+				join(maximumActionValues, maximumStateValues)) {
+
+				@Override
+				protected double f(double[] input) {
+					return qEstimator.runInput(join(state.getRaw(), input))[0];
+				}
+			
+			}).minimize();
         }
         
         return new Action(actionValues);
@@ -165,14 +166,6 @@ public class QLearner {
 		return new Q(qEstimator.runInput(join(state.getRaw(), action.getRaw())));
 	}
 	
-	/**
-	 * Estimate a Q-Value for the optimizer.
-	 * @param action the action parameters.
-	 * @return the estimated Q-Value.
-	 */
-	private double optimizerEstimateQ(double[] action) {
-		return qEstimator.runInput(join(optimizerState, action))[0];
-	}
 	
 	/**
 	 * Update the {@link NeuralNetworkQEstimator} Q values.

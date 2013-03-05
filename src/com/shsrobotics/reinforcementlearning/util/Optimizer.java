@@ -63,7 +63,7 @@ public abstract class Optimizer {
 	 * @param function the fitness function.
 	 * @return the maximized coordinates.
 	 */
-	double[] maximize() {
+	public double[] maximize() {
 		double[] toReturn = zeros();
 		Point[] vertices = new Point[n + 1]; // simplex vertices
 
@@ -135,7 +135,7 @@ public abstract class Optimizer {
 	 * @param function the fitness function.
 	 * @return the minimized coordinates.
 	 */
-	double[] minimize() {
+	public double[] minimize() {
 		double[] toReturn = zeros();
 		Point[] vertices = new Point[n + 1]; // simplex vertices
 
