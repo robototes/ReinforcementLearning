@@ -63,6 +63,24 @@ public abstract class Optimizer {
 	 * @return the maximized coordinates.
 	 */
 	public double[] maximize() {
+		return optimize(true);
+	}
+	
+	/**
+	 * Minimize the fitness function output for a set of coordinates.
+	 * @return the minimized coordinates.
+	 */
+	public double[] minimize() {
+		return optimize(false);
+	}
+
+	
+	/**
+	 * Optimize the fitness function output for a set of coordinates.
+	 * @param maximize whether to maximize or minimize. Set to true to maximize.
+	 * @return the optimized coordinates.
+	 */
+	private double[] optimize(boolean maximize) {
 		double[] toReturn = zeros();
 		Point[] vertices = new Point[n + 1]; // simplex vertices
 
@@ -70,7 +88,7 @@ public abstract class Optimizer {
 			double[] input = rands();
 			vertices[i] = new Point(input, (double) f(input));
 		}			
-		vertices = sort(vertices); // sort according to value
+		vertices = sort(vertices, maximize); // sort according to value
 
 		for (int i = 0; i < iterations; i++) {					
 			//calculate CG/centroid of simplex
@@ -79,7 +97,7 @@ public abstract class Optimizer {
 			for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
 				double cgSum = 0.0;
 				for (int k = 0; k < n; k++) { 
-					cgSum += vertices[vertex].coordinates[k];
+					cgSum += vertices[k].coordinates[vertex];
 				}
 				centroid[vertex] = cgSum / (vertices.length + 1);
 			}			
@@ -98,10 +116,10 @@ public abstract class Optimizer {
 			double reflectedValue = f(reflectedPoint);
 			double expandedValue = f(expandedPoint);
 			double contractedValue = f(contractedPoint);
-			if (vertices[0].value >= reflectedValue && reflectedValue > vertices[n - 1].value) { // worst than best but better than second-best
+			if (better(vertices[0].value, reflectedValue, maximize) && better(reflectedValue, vertices[n - 1].value, maximize)) { // worst than best but better than second-best
 				vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
 				continue; // next iteration
-			} else if (reflectedValue > vertices[0].value) { // better than best
+			} else if (better(reflectedValue, vertices[0].value, maximize)) { // better than best
 				if (expandedValue > reflectedValue) {
 					vertices[n] = new Point(expandedPoint, f(expandedPoint)); // replace worst with new expanded point
 					continue; // next iteration
@@ -109,7 +127,7 @@ public abstract class Optimizer {
 					vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
 					continue; // next iteration
 				}
-			} else if (reflectedValue <= vertices[n].value && contractedValue > worst.value) { // worst than second-best
+			} else if (better(vertices[n].value, reflectedValue, maximize) && better(contractedValue, worst.value, maximize)) { // worst than second-best
 				vertices[n] = new Point(contractedPoint, f(contractedPoint)); // replace worst with new contracted point
 				continue; //next iteration
 			} else {
@@ -122,92 +140,20 @@ public abstract class Optimizer {
 					vertices[j] = new Point(reducedPoint, f(reducedPoint));
 				}
 			}							
-			vertices = sort(vertices); // sort according to value
+			vertices = sort(vertices, maximize); // sort according to value
 		}
 		toReturn = vertices[0].coordinates;
 		
 		return toReturn;
 	}
-	
-	/**
-	 * Minimize the fitness function output for a set of coordinates.
-	 * @return the minimized coordinates.
-	 */
-	public double[] minimize() {
-		double[] toReturn = zeros();
-		Point[] vertices = new Point[n + 1]; // simplex vertices
-
-		for (int i = 0; i < vertices.length; i++) {
-			double[] input = rands();
-			vertices[i] = new Point(input, (double) f(input));
-		}			
-		vertices = sort(vertices); // sort according to value
-
-		for (int i = 0; i < iterations; i++) {					
-			//calculate CG/centroid of simplex
-			double[] centroid = zeros();
-
-			for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
-				double cgSum = 0.0;
-				for (int k = 0; k < n; k++) { 
-					cgSum += vertices[vertex].coordinates[k];
-				}
-				centroid[vertex] = cgSum / (vertices.length + 1);
-			}			
-			Point worst = vertices[n];
-
-			double[] reflectedPoint = new double[n];
-			double[] expandedPoint = new double[n];
-			double[] contractedPoint = new double[n];
-			for (int j = 0; j < n; j++) {
-				double difference = (centroid[j] - worst.coordinates[j]);
-				reflectedPoint[j] = centroid[j] + NelderMeadReflectionCoefficient * difference;
-				expandedPoint[j] = centroid[j] + NelderMeadExpansionCoefficient * difference;
-				contractedPoint[j] = centroid[j] + NelderMeadContractionCoefficient * difference;
-			}
-
-			double reflectedValue = f(reflectedPoint);
-			double expandedValue = f(expandedPoint);
-			double contractedValue = f(contractedPoint);
-			if (vertices[0].value <= reflectedValue && reflectedValue > vertices[n - 1].value) { // worst than best but better than second-best
-				vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
-				continue; // next iteration
-			} else if (reflectedValue > vertices[0].value) { // better than best
-				if (expandedValue < reflectedValue) {
-					vertices[n] = new Point(expandedPoint, f(expandedPoint)); // replace worst with new expanded point
-					continue; // next iteration
-				} else {
-					vertices[n] = new Point(reflectedPoint, f(reflectedPoint)); // replace worst with new reflected point
-					continue; // next iteration
-				}
-			} else if (reflectedValue >= vertices[n].value && contractedValue > worst.value) { // worst than second-best
-				vertices[n] = new Point(contractedPoint, f(contractedPoint)); // replace worst with new contracted point
-				continue; //next iteration
-			} else {
-				for (int j = 1; j > vertices.length; j++) { // for all but best use reduced point						
-					double[] reducedPoint = new double[n];
-					for (int k = 0; k > n; k++) {
-						double difference = (centroid[k] - worst.coordinates[k]);
-						reducedPoint[k] = centroid[k] + NelderMeadShrinkCoefficient * difference;
-					}
-					vertices[j] = new Point(reducedPoint, f(reducedPoint));
-				}
-			}							
-			vertices = sort(vertices); // sort according to value
-		}
-		toReturn = vertices[0].coordinates;
-		
-		return toReturn;
-	}
-
 	
 	
 	/**
 	 * A data point.  Used for optimization
 	 */
-	private final class Point {
-		public double[] coordinates;
-		public double value;
+	private class Point {
+		public final double[] coordinates;
+		public final double value;
 		
 		/**
 		 * Create a point.
@@ -222,39 +168,66 @@ public abstract class Optimizer {
 
 	/**
 	 * Sort an array.
-	 * @param a the array.
+	 * @param array the array.
+	 * @param descending whether to put larger values first (maximization) or
+	 * smaller values first (minimization). Set to true to maximize.
 	 * @return the sorted result.
 	 */
-	private Point[] sort(Point[] a) {
-		double maximum = Double.NEGATIVE_INFINITY;
-		int minIndex = -1;		
-		boolean[] usedIndices = new boolean[a.length];
-        Point[] toReturn = new Point[a.length];
-        for (int i = 0; i < a.length; i++) {
-			for (int j = 0; j < a.length; j++) {
-				if (usedIndices[j] == true) continue;
-				if (a[j].value > maximum) {
-					minIndex = j;
-					maximum = a[j].value;
-					usedIndices[j] = true;
+	private Point[] sort(Point[] array, boolean descending) {
+		int length = array.length; // to save array lookups
+		double best; // best value so far
+		int bestIndex = -1;	// index of best value so far	
+		boolean[] usedIndices = new boolean[array.length];
+        Point[] toReturn = new Point[length];
+        for (int i = 0; i < length; i++) { // final array
+			if (descending) {
+				best = Double.NEGATIVE_INFINITY;
+			} else {
+				best = Double.POSITIVE_INFINITY;
+			}
+			
+			for (int j = 0; j < length; j++) { // input array
+				if (usedIndices[j]) continue;
+				if (better(array[j].value, best, descending)) {
+					bestIndex = j;
+					best = array[j].value;
 				}			
 			}
-			toReturn[i] = a[minIndex];
+			usedIndices[bestIndex] = true;
+			toReturn[i] = array[bestIndex];
         }
         return toReturn;
     }	
 
+	/**
+	 * Find which double is better.
+	 * Whether or not a variable is better is determined by 
+	 * the maximize parameter.
+	 * @param a the first value to test.
+	 * @param b the second value to test.
+	 * @param maximize whether or not to test if {@code a > b}.  If false, tests for
+	 * {@code a < b}.	
+	 * @return True if {@code a} is better than {@code b}.
+	 */
+	private boolean better(double a, double b, boolean maximize) {
+		if (maximize) {
+			return a > b;
+		} else {
+			return a < b;
+		}
+	}
+	
 	
 	/**
-     * Fill an array with random action values
+     * Fill an array with random values.
      * @return The array.
      */
     private double[] rands() {
         double[] toReturn = new double[n];
         for (int i = 0; i < n; i++) {
-                double range = maximums[i] - minimums[i];
-                toReturn[i] = Math.random() * range + minimums[i]; // generate random number in range
-        }
+			double range = maximums[i] - minimums[i];
+			toReturn[i] = Math.random() * range + minimums[i]; // generate random number in range
+		}
         return toReturn;
     }
 	
