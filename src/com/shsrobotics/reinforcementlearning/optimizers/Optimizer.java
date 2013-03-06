@@ -1,4 +1,4 @@
-package com.shsrobotics.reinforcementlearning.util;
+package com.shsrobotics.reinforcementlearning.optimizers;
 
 /**
  * Optimize coordinates based on the Nelder-Mead (Simplex) Algorithm.
@@ -276,5 +276,5 @@ public abstract class Optimizer {
 	 * @param input the input values (domain).
 	 * @return the result (range).
 	 */
-	protected abstract double f(double[] input);
+	public abstract double f(double[] input);
 }

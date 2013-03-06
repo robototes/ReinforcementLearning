@@ -1,7 +1,8 @@
 package com.shsrobotics.reinforcementlearning;
 
+import com.shsrobotics.reinforcementlearning.estimators.NeuralNetworkQEstimator;
+import com.shsrobotics.reinforcementlearning.optimizers.Optimizer;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
-import com.shsrobotics.reinforcementlearning.util.Optimizer;
 
 /**
  * Learns how to act based on rewards.
@@ -144,13 +145,10 @@ public class QLearner {
 			actionValues = (new Optimizer(actions + states, accuracyIterations, 
 				join(minimumActionValues, minimumStateValues), 
 				join(maximumActionValues, maximumStateValues)) {
-
-				@Override
-				protected double f(double[] input) {
-					return qEstimator.runInput(join(state.getRaw(), input))[0];
-				}
-			
-			}).minimize();
+					public double f(double[] input) {
+						return qEstimator.runInput(join(state.getRaw(), input))[0];
+					}	
+				}).minimize();
         }
         
         return new Action(actionValues);

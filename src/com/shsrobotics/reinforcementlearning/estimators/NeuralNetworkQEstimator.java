@@ -1,4 +1,4 @@
-package com.shsrobotics.reinforcementlearning;
+package com.shsrobotics.reinforcementlearning.estimators;
 
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 

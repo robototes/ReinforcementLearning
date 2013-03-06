@@ -1,4 +1,4 @@
-package com.shsrobotics.reinforcementlearning;
+package com.shsrobotics.reinforcementlearning.estimators;
 
 /**
  * Estimates Q Values using a random forest ensemble classifier for use in a {@link QLearner}.

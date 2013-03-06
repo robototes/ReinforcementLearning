@@ -1,5 +1,7 @@
 package com.shsrobotics.reinforcementlearning.util;
 
+import com.shsrobotics.reinforcementlearning.optimizers.VarianceMinimizer;
+
 /**
  * A Decision tree for use in random forests.
  * <p/>

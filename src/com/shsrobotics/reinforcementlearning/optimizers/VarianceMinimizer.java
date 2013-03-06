@@ -1,10 +1,12 @@
-package com.shsrobotics.reinforcementlearning.util;
+package com.shsrobotics.reinforcementlearning.optimizers;
+
+import com.shsrobotics.reinforcementlearning.util.DataPoint;
 
 /**
  * For use in {@link RandomDecisionTree}. Minimizes entropy by changing split
  * parameters.
  */
-class VarianceMinimizer extends Optimizer {
+public class VarianceMinimizer extends Optimizer {
 	
 	/**
 	 * Current data to use in minimization.
@@ -31,12 +33,12 @@ class VarianceMinimizer extends Optimizer {
 	 * @param minimums minimum variable values.
 	 * @param maximums maximum variable values.
 	 */
-	protected VarianceMinimizer(double[] minimums, double[] maximums) {
+	public VarianceMinimizer(double[] minimums, double[] maximums) {
 		super(minimums.length, 8, minimums, maximums);
 	}
 
 	@Override
-	protected double f(double[] input) {
+	public double f(double[] input) {
 		return nodeVariance(input[0]);
 	}
 	
@@ -44,7 +46,7 @@ class VarianceMinimizer extends Optimizer {
 	 * Calculate the best split for the given variable.
 	 * @return the split to minimize variance of a node.
 	 */
-	protected double bestSplit(int variable) {
+	public double bestSplit(int variable) {
 		this.variable = variable;
 		bestSplit = minimize()[0];
 		return bestSplit;
@@ -54,7 +56,7 @@ class VarianceMinimizer extends Optimizer {
 	 * Get the entropy value associated with the best split.
 	 * @return the lowest variance possible.
 	 */
-	protected double getMinimumVariance() {
+	public double getMinimumVariance() {
 		return nodeVariance(bestSplit);
 	}
 	
@@ -63,7 +65,7 @@ class VarianceMinimizer extends Optimizer {
 	 * <p/>
 	 * @param subset the data to use.
 	 */
-	protected void setDataSubset(DataPoint[] subset) {
+	public void setDataSubset(DataPoint[] subset) {
 		this.data = subset;
 		this.dataLength = subset.length; // local scope is faster lookup
 	}
