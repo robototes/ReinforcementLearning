@@ -45,7 +45,7 @@ public abstract class Optimizer {
 	
 	/**
 	 * Step size for Pattern Search algorithm.
-	 * Defaults to twenty percent of average variable range.
+	 * Defaults to ten percent of average variable range.
 	 */
 	private double PatternSearchStep;
 	
@@ -65,7 +65,7 @@ public abstract class Optimizer {
 		//find average step size
 		double sum = 0;
 		for (int variable = 0; variable < n; variable++) {
-			sum += 0.2 * (maximums[variable] - minimums[variable]); // twenty percent of the range
+			sum += 0.1 * (maximums[variable] - minimums[variable]); // ten percent of the range
 		}
 		PatternSearchStep = sum / n;
 	}
@@ -100,7 +100,7 @@ public abstract class Optimizer {
 	private double[] psOptimize(boolean maximize) {
 		/*
 		 * Pattern vertices.  Center is stored in 0, Left(k) is stored in k + 1,
-		 * and Right(k) is stored in 2(k + 1).
+		 * and Right(k) is stored in k + n.
 		 */
 		Point[] vertices = new Point[2 * n + 1]; 
 		int length = vertices.length;
@@ -118,11 +118,9 @@ public abstract class Optimizer {
 		// each variable
 		for (int k = 0; k < n; k++) {
 			int leftPoint = k + 1;
-			int rightPoint = 2 * (k + 1);
-			vertices[leftPoint].coordinates[k] -= PatternSearchStep;
-			vertices[leftPoint].update();
-			vertices[rightPoint].coordinates[k] += PatternSearchStep;	
-			vertices[rightPoint].update();
+			int rightPoint = k + 1 + n;
+			vertices[leftPoint].increment(k, -PatternSearchStep);
+			vertices[rightPoint].increment(k, PatternSearchStep);	
 		}
 		
 		for (int i = 0; i < iterations; i++) {
@@ -139,20 +137,20 @@ public abstract class Optimizer {
 				PatternSearchStep /= 2; // halve search size.
 				for (int k = 0; k < n; k++) {
 					int leftPoint = k + 1;
-					int rightPoint = 2 * (k + 1);
-					vertices[leftPoint].coordinates[k] += PatternSearchStep;
-					vertices[leftPoint].update();
-					vertices[rightPoint].coordinates[k] -= PatternSearchStep;	
-					vertices[rightPoint].update();
+					int rightPoint = k + 1 + n;
+					vertices[leftPoint].increment(k, PatternSearchStep);
+					vertices[rightPoint].increment(k, -PatternSearchStep);
 				}
 			} else {
 				// move pattern
+				double[] changes = new double[n];
+				for (int k = 0; k < n; k++) {
+					changes[k] = vertices[bestIndex].coordinates[k]
+							- vertices[0].coordinates[k];
+				}
 				for (int vertex = 0; vertex < length; vertex++) {
 					for (int k = 0; k < n; k++) {
-						Point point = vertices[vertex];
-						point.coordinates[k] += vertices[0].coordinates[k]
-							- vertices[bestIndex].coordinates[k];
-						point.update();						
+						vertices[vertex].increment(k, changes[k]);			
 					}
 				}
 			}
@@ -236,10 +234,16 @@ public abstract class Optimizer {
 	
 	
 	/**
-	 * A data point.  Used for optimization
+	 * A data point.  Used for optimization.
 	 */
-	private class Point {
+	public class Point {
+		/**
+		 * The data coordinates.
+		 */
 		public double[] coordinates;
+		/**
+		 * The data dependent variable (output).
+		 */
 		public double value;
 		
 		/**
@@ -252,8 +256,23 @@ public abstract class Optimizer {
 			this.value = value;
 		}
 		
+		/**
+		 * Update the {@code value} variable.
+		 */
 		public void update() {
 			this.value = f(this.coordinates);
+		}
+		
+		/**
+		 * Increment a coordinate by a specified amount.
+		 * @param k the coordinate variable to change.
+		 * @param amount the amount to increment by.
+		 */
+		public void increment(int k, double amount) {
+			double[] newCoordinates = this.coordinates.clone();
+			newCoordinates[k] += amount;
+			this.coordinates = newCoordinates.clone();
+			update();
 		}
 	}
 
