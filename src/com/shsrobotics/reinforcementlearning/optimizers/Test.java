@@ -9,7 +9,7 @@ public class Test {
 	public void run() {
 		double[] minimums = {-10, -10};
 		double[] maximums = {10, 10};
-		double[] best = (new Optimizer(2, 8, minimums, maximums) {
+		double[] best = (new Optimizer(8, minimums, maximums) {
 			@Override
 			public double f(double[] input) {
 				double x = input[0];

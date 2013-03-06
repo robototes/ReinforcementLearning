@@ -1,7 +1,8 @@
 package com.shsrobotics.reinforcementlearning.optimizers;
 
 /**
- * Optimize coordinates based on the Nelder-Mead (Simplex) Algorithm.
+ * Optimize coordinates based on either the Nelder-Mead (Simplex) Algorithm
+ * or a default pattern search algorithm.
  * @author Team 2412.
  */
 public abstract class Optimizer {
@@ -43,17 +44,30 @@ public abstract class Optimizer {
 	private double NelderMeadShrinkCoefficient = 1 / 2;
 	
 	/**
+	 * Step size for Pattern Search algorithm.
+	 * Defaults to twenty percent of average variable range.
+	 */
+	private double PatternSearchStep;
+	
+	/**
 	 * Create an optimizer.
 	 * @param dimension the number of variables.
 	 * @param iterations how precise to maximize.
 	 * @param minimums the minimum domain values.
 	 * @param maximums the maximum domain values.
 	 */
-	public Optimizer(int dimension, int iterations, double[] minimums, double[] maximums) {
-		this.n = dimension;
+	public Optimizer(int iterations, double[] minimums, double[] maximums) {
+		this.n = minimums.length;
 		this.iterations = iterations;
 		this.minimums = minimums;
 		this.maximums = maximums;
+		
+		//find average step size
+		double sum = 0;
+		for (int variable = 0; variable < n; variable++) {
+			sum += 0.2 * (maximums[variable] - minimums[variable]); // twenty percent of the range
+		}
+		PatternSearchStep = sum / n;
 	}
 	
 	
@@ -63,7 +77,11 @@ public abstract class Optimizer {
 	 * @return the maximized coordinates.
 	 */
 	public double[] maximize() {
-		return optimize(true);
+		if (n >= 4) { // cutoff for when one algorithm is better
+			return simplexOptimize(true);
+		} else {
+			return psOptimize(true);
+		}
 	}
 	
 	/**
@@ -71,35 +89,104 @@ public abstract class Optimizer {
 	 * @return the minimized coordinates.
 	 */
 	public double[] minimize() {
-		return optimize(false);
+		if (n >= 4) { // cutoff for when one algorithm is better
+			return simplexOptimize(false);
+		} else {
+			return psOptimize(false);
+		}
 	}
 
 	
+	private double[] psOptimize(boolean maximize) {
+		/*
+		 * Pattern vertices.  Center is stored in 0, Left(k) is stored in k + 1,
+		 * and Right(k) is stored in 2(k + 1).
+		 */
+		Point[] vertices = new Point[2 * n + 1]; 
+		int length = vertices.length;
+		
+		// center point placed randomly
+		double[] center = rands();
+		for (int vertex = 0; vertex < length; vertex++) {
+			if (vertex == 0) {
+				vertices[vertex] = new Point(center, f(center));
+			} else {
+				vertices[vertex] = new Point(center, 0.0); // saves computation time, as these are recalculated immediately
+			}
+		}
+		
+		// each variable
+		for (int k = 0; k < n; k++) {
+			int leftPoint = k + 1;
+			int rightPoint = 2 * (k + 1);
+			vertices[leftPoint].coordinates[k] -= PatternSearchStep;
+			vertices[leftPoint].update();
+			vertices[rightPoint].coordinates[k] += PatternSearchStep;	
+			vertices[rightPoint].update();
+		}
+		
+		for (int i = 0; i < iterations; i++) {
+			double best = vertices[0].value; // best value
+			int bestIndex = -1; // index of best value
+			for (int vertex = 1; vertex < length; vertex++) {
+				if (better(vertices[vertex].value, best, maximize)) {
+					best = vertices[vertex].value;
+					bestIndex = vertex;
+				}
+			}
+			if (bestIndex == -1) { // center was best
+				// scale pattern
+				PatternSearchStep /= 2; // halve search size.
+				for (int k = 0; k < n; k++) {
+					int leftPoint = k + 1;
+					int rightPoint = 2 * (k + 1);
+					vertices[leftPoint].coordinates[k] += PatternSearchStep;
+					vertices[leftPoint].update();
+					vertices[rightPoint].coordinates[k] -= PatternSearchStep;	
+					vertices[rightPoint].update();
+				}
+			} else {
+				// move pattern
+				for (int vertex = 0; vertex < length; vertex++) {
+					for (int k = 0; k < n; k++) {
+						Point point = vertices[vertex];
+						point.coordinates[k] += vertices[0].coordinates[k]
+							- vertices[bestIndex].coordinates[k];
+						point.update();						
+					}
+				}
+			}
+		}
+		
+		return vertices[0].coordinates;
+	}
+	
 	/**
-	 * Optimize the fitness function output for a set of coordinates.
+	 * Optimize the fitness function output for a set of coordinates
+	 * using the Nelder-Mead algorithm.
 	 * @param maximize whether to maximize or minimize. Set to true to maximize.
 	 * @return the optimized coordinates.
 	 */
-	private double[] optimize(boolean maximize) {
-		double[] toReturn = zeros();
+	private double[] simplexOptimize(boolean maximize) {
+		double[] toReturn = zeros(n);
 		Point[] vertices = new Point[n + 1]; // simplex vertices
 
 		for (int i = 0; i < vertices.length; i++) {
 			double[] input = rands();
-			vertices[i] = new Point(input, (double) f(input));
+			vertices[i] = new Point(input, f(input));
 		}			
 		vertices = sort(vertices, maximize); // sort according to value
 
 		for (int i = 0; i < iterations; i++) {					
 			//calculate CG/centroid of simplex
-			double[] centroid = zeros();
+			double[] centroid = zeros(n);
 
-			for (int vertex = 0; vertex < vertices.length - 1; vertex++) { // for each vector/coordinate except worst
+			for (int variable = 0; variable < n; variable++) { // each parameter
 				double cgSum = 0.0;
-				for (int k = 0; k < n; k++) { 
-					cgSum += vertices[k].coordinates[vertex];
+				for (int k = 0; k <= n; k++) { 
+					cgSum += vertices[k].coordinates[variable];
 				}
-				centroid[vertex] = cgSum / (vertices.length + 1);
+				centroid[variable] = cgSum / (n + 2);
 			}			
 			Point worst = vertices[n];
 
@@ -152,8 +239,8 @@ public abstract class Optimizer {
 	 * A data point.  Used for optimization
 	 */
 	private class Point {
-		public final double[] coordinates;
-		public final double value;
+		public double[] coordinates;
+		public double value;
 		
 		/**
 		 * Create a point.
@@ -163,6 +250,10 @@ public abstract class Optimizer {
 		public Point(double[] coordinates, double value)	{
 			this.coordinates = coordinates;
 			this.value = value;
+		}
+		
+		public void update() {
+			this.value = f(this.coordinates);
 		}
 	}
 
@@ -233,10 +324,11 @@ public abstract class Optimizer {
 	
 	/**
      * Fill an array with zeros
+	 * @param size the number of zeros.
      * @return The array.
      */
-    private double[] zeros() {
-        double[] toReturn = new double[n];
+    private double[] zeros(int size) {
+        double[] toReturn = new double[size];
         for (int i = 0; i < n; i++) {
                 toReturn[i] = 0;
         }
