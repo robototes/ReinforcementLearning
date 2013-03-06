@@ -1,8 +1,11 @@
 package com.shsrobotics.reinforcementlearning.optimizers;
 
 /**
- * Optimize coordinates based on either the Nelder-Mead (Simplex) Algorithm
- * or a default pattern search algorithm.
+ * Optimize coordinates based on a Pattern Search algorithm.
+ * To use this class, classes must extend it and provide 
+ * a {@code double f(double[] input)} method. Method calls should be
+ * made to {@code minimize()} and {@code maximize()} only.  Other members
+ * are public only for extension and implementation purposes.
  * @author Team 2412.
  */
 public abstract class Optimizer {
