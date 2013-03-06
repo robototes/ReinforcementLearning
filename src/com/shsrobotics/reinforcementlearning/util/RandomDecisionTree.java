@@ -108,7 +108,7 @@ public class RandomDecisionTree {
 		//extend tree
 		Node yes = new Node(average(positiveSubset)); // yes
 		Node no = new Node(average(negativeSubset)); // no
-		lastUsedNode.addChildren(yes, no, cutoff);
+		lastUsedNode.addChildren(yes, no, cutoff, minVarianceIndex);
 
 		if (positiveSubset.length > 5) { // stopping rule
 			lastUsedNode = yes;
@@ -127,7 +127,7 @@ public class RandomDecisionTree {
 	 * @param input the new value.
 	 * @return the tree's decision.
 	 */
-	public double run(double input) {
+	public double run(double[] input) {
 		return root.get(input);
 	}
 
