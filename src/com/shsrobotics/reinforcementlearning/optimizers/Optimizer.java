@@ -12,9 +12,10 @@ public abstract class Optimizer {
 	 */
 	private final int n; 
 	/**
-	 * How many times to run the Nelder-Mead algorithm
+	 * How many times to run the algorithm
 	 */
 	private final int iterations;
+	
 	/**
 	 * Minimum variable values.
 	 * Used to choose random starting points.
