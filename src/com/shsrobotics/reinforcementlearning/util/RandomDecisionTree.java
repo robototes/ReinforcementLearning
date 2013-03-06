@@ -171,16 +171,26 @@ public class RandomDecisionTree {
 	 * @return the isolated data.
 	 */
 	private DataPoint[] getDataSubset(DataPoint[] currentData, int index, double cutoff, boolean positiveNode) {
-		DataPoint[] toReturn = null;
+		DataPoint[] toReturn = new DataPoint[0];
 		for (int i = 0; i < currentData.length; i++) {
 			double value = currentData[i].getInputs()[index];
-			if (value > cutoff && positiveNode) {
-				toReturn[i] = currentData[i];
-			}
-			if (value <= cutoff && !positiveNode) {
-				toReturn[i] = currentData[i];
+			if ((value > cutoff && positiveNode) || (value <= cutoff && !positiveNode)) {
+				toReturn = push(toReturn, currentData[i]);
 			}
 		}
 		return toReturn;
+	}	
+	
+	/**
+	 * Adds a data point on to the end of a list of data points.
+	 * @param current the current array.
+	 * @param newData the new data to push.
+	 * @return the new array with the new data.
+	 */
+	private DataPoint[] push(DataPoint[] current, DataPoint newData) {
+		DataPoint[] longer = new DataPoint[current.length + 1];
+		System.arraycopy(current, 0, longer, 0, current.length);
+		longer[current.length] = newData;
+		return longer;
 	}
 }

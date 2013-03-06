@@ -119,16 +119,26 @@ public class VarianceMinimizer extends Optimizer {
 	 * @return the isolated data.
 	 */
 	private DataPoint[] getDataSubset(double cutoff, boolean positiveNode) {
-		DataPoint[] toReturn = null;
+		DataPoint[] toReturn = new DataPoint[0];
 		for (int i = 0; i < dataLength; i++) {
 			double value = data[i].getInputs()[variable];
-			if (value > cutoff && positiveNode) {
-				toReturn[i] = data[i];
-			}
-			if (value <= cutoff && !positiveNode) {
-				toReturn[i] = data[i];
+			if ((value > cutoff && positiveNode) || (value <= cutoff && !positiveNode)) {
+				toReturn = push(toReturn, data[i]);
 			}
 		}
 		return toReturn;
+	}
+	
+	/**
+	 * Adds a data point on to the end of a list of data points.
+	 * @param current the current array.
+	 * @param newData the new data to push.
+	 * @return the new array with the new data.
+	 */
+	private DataPoint[] push(DataPoint[] current, DataPoint newData) {
+		DataPoint[] longer = new DataPoint[current.length + 1];
+		System.arraycopy(current, 0, longer, 0, current.length);
+		longer[current.length] = newData;
+		return longer;
 	}
 }
