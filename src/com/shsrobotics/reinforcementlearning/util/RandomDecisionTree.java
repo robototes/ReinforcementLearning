@@ -37,7 +37,7 @@ public class RandomDecisionTree {
 	/**
 	 * A list of which variables have been used so far in the tree.
 	 */
-	boolean[] usedVariables = new boolean[numberOfVariables]; // list of used variables while building tree
+	boolean[] usedVariables; // list of used variables while building tree
 	
 	/**
 	 * An optimizer/minimizer class for minimizing variance at a split. <p />
@@ -53,6 +53,7 @@ public class RandomDecisionTree {
 	public RandomDecisionTree(DataPoint[] data, int variableSubset, double[] minimums, double[] maximums) {
 		this.variableSubset = variableSubset;
 		this.numberOfVariables = data[0].getInputKeys().length;
+		this.usedVariables = new boolean[numberOfVariables]; 
 
 		varianceMinimizer = new VarianceMinimizer(minimums, maximums);
 
@@ -75,7 +76,7 @@ public class RandomDecisionTree {
 		int totalCount = 0;
 		for (int variable = 0; variable < variableSubset; variable++) { // select variables to base split
 			int randomVariable = (int) (Math.random() * variableSubset);
-			if (usedVariables[randomVariable] == true) {
+			if (usedVariables[randomVariable]) {
 				variable--; // search again
 				continue;
 			} else {
