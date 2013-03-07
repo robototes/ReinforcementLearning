@@ -7,5 +7,18 @@ package com.shsrobotics.reinforcementlearning.math;
  * @author Max
  */
 public class MatrixMath {
+	private MatrixMath() {
+		;
+	}
+	
+	public BasicMatrix getPointMatrix(double[] position) {
+		BasicMatrix m = new BasicMatrix(position.length + 1, 1);
+		
+		for ( int i = 0; i < position.length; i++ ) {
+			
+		}
+		
+		return m;
+	}
 	
 }
