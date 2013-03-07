@@ -1,11 +1,19 @@
 package com.shsrobotics.reinforcementlearning.math;
 
 /**
- * This interface says this class can be used as a matrix. This means it has a 
- * way of getting values out of the matrix, and the values in the matrix are 
- * stored in a way that the structure is preserved.
- * @author Max
+ *	Represents an m<i>x</i>n dimensional matrix and supports these basic operations:
+ *	<ul>
+ *		<li>scaling</li>
+ *		<li>matrix addition</li>
+ *		<li>matrix subtraction</li>
+ *		<li>matrix multiplication</li>
+ *	</ul>
+ *	
+ *	For more advanced operations see {@link MatrixMath}
+ *	
+ *	@author Max
  */
+
 public interface Matrix {
 	
 	public int getRowSize();

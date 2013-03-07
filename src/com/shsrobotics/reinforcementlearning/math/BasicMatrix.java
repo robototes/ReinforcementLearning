@@ -1,18 +1,6 @@
 package com.shsrobotics.reinforcementlearning.math;
 
-/** 
- *	Represents an m<i>x</i>n dimensional matrix and supports these basic operations:
- *	<ul>
- *		<li>scaling</li>
- *		<li>matrix addition</li>
- *		<li>matrix subtraction</li>
- *		<li>matrix multiplication</li>
- *	</ul>
- *	
- *	For more advanced operations see {@link MatrixMath}
- *	
- *	@author Max
- */
+
 public class BasicMatrix implements Matrix {
 	
 	double[][] body;

@@ -1,7 +1,12 @@
 package com.shsrobotics.reinforcementlearning.math;
 
 /**
- *
+ * This class is useful when a matrix has been composed, but some of the values
+ * in it need to change. For example, using a rotation matrix composed with a
+ * translation matrix would require a recomposition every time the
+ * angle in the rotation matrix changed. With this class, the composition does 
+ * not need to be computed again.
+ * 
  * @author Max
  */
 public class ParameteredMatrix implements Matrix {
