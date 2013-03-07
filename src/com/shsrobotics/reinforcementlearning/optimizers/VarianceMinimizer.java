@@ -34,12 +34,12 @@ public class VarianceMinimizer extends Optimizer {
 	 * @param maximums maximum variable values.
 	 */
 	public VarianceMinimizer(double[] minimums, double[] maximums) {
-		super(minimums.length, 24, minimums, maximums);
+		super((int) (0.5 * (16 + Math.pow(minimums.length, 2))), minimums, maximums);
 	}
 
 	@Override
 	public double f(double[] input) {
-		return nodeVariance(input[0]);
+		return nodeVariance(input[0]); // variance in output value
 	}
 	
 	/**
@@ -82,7 +82,7 @@ public class VarianceMinimizer extends Optimizer {
 		double positiveStdDev = individualSampleVariance(positiveSubset);
 		double negativeStdDev = individualSampleVariance(negativeSubset);
 
-		return (positiveStdDev + negativeStdDev) / 2; // average of standard devations
+		return positiveStdDev + negativeStdDev; // average of standard devations
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class VarianceMinimizer extends Optimizer {
 
 		//find average
 		for (int i = 0; i < subsetLength; i++) {
-			sum += subset[i].getInputs()[variable];
+			sum += subset[i].getOutputs()[0];
 		}
 		double mean = sum / subsetLength;
 
@@ -119,16 +119,26 @@ public class VarianceMinimizer extends Optimizer {
 	 * @return the isolated data.
 	 */
 	private DataPoint[] getDataSubset(double cutoff, boolean positiveNode) {
-		DataPoint[] toReturn = null;
+		DataPoint[] toReturn = new DataPoint[0];
 		for (int i = 0; i < dataLength; i++) {
 			double value = data[i].getInputs()[variable];
-			if (value > cutoff && positiveNode) {
-				toReturn[i] = data[i];
-			}
-			if (value <= cutoff && !positiveNode) {
-				toReturn[i] = data[i];
+			if ((value > cutoff && positiveNode) || (value <= cutoff && !positiveNode)) {
+				toReturn = push(toReturn, data[i]);
 			}
 		}
 		return toReturn;
+	}
+	
+	/**
+	 * Adds a data point on to the end of a list of data points.
+	 * @param current the current array.
+	 * @param newData the new data to push.
+	 * @return the new array with the new data.
+	 */
+	private DataPoint[] push(DataPoint[] current, DataPoint newData) {
+		DataPoint[] longer = new DataPoint[current.length + 1];
+		System.arraycopy(current, 0, longer, 0, current.length);
+		longer[current.length] = newData;
+		return longer;
 	}
 }
