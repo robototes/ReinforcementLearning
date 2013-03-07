@@ -79,7 +79,7 @@ public class RandomDecisionTree {
 			if (usedVariables[randomVariable]) {
 				variable--; // search again
 				if (++totalCount - variableSubset > variables.length) {
-					break;
+					return;
 				}
 				continue;
 			} else {
