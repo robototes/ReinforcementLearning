@@ -79,7 +79,7 @@ public class RandomDecisionTree {
 			int randomVariable = (int) (Math.random() * variableSubset);
 			if (usedVariables[randomVariable]) {
 				variable--; // search again
-				if (++totalCount - variableSubset > variables.length) {
+				if (++totalCount - variableSubset > variables.length) { // no variables left
 					return;
 				}
 				continue;

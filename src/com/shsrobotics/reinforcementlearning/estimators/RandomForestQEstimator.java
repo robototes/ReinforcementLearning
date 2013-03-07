@@ -44,13 +44,14 @@ public class RandomForestQEstimator {
 	public double[] addInitialData(DataPoint[] data) {
 		int sampleSize = data.length;
 		int variableSize = data[0].getInputs().length;
+		int subsetSize = (int) Math.ceil((double) variableSize / 3);
 		int numberOfTrees = forest.length;
 		BootstrapSample[] samples = new BootstrapSample[numberOfTrees];		
 		for (int i = 0; i < numberOfTrees; i++) {
 			samples[i] = takeBootstrapSample(sampleSize, data);
 			// add new tree and train it
 			forest[i] = new RandomDecisionTree(samples[i].sample, 
-				variableSize / 3, minimums, maximums);
+				subsetSize, minimums, maximums);
 		}
 		
 		double[] variableImportance = zeros(variableSize);		
@@ -69,16 +70,17 @@ public class RandomForestQEstimator {
 				sum += Math.pow(actual - expected, 2);
 			}
 			double treeMSE = sum / oobCount;
-			double[] variableMSE = new double[variableSize];
+			
 			// randomly change variables to get MSE for each variable
+			double[] variableMSE = new double[variableSize];
 			for (int j = 0; j < variableSize; j++) {
 				sum = 0.0;
 				for (int k = 0; k < sampleSize; k++) {
-					if (samples[i].used[j]) { // data used in training
+					if (samples[i].used[k] == true) { // data used in training
 						continue;
 					}
 					DataPoint example = data[k];
-					double[] inputs = example.getInputs();
+					double[] inputs = example.getInputs().clone();
 					// randomly change the variable
 					inputs[j] = (maximums[j] - minimums[j]) * Math.random() + minimums[j];
 					double actual = run(inputs);

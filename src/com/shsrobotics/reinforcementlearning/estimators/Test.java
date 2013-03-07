@@ -8,7 +8,7 @@ public class Test {
 	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
-		int n = 100;
+		int n = 200;
 		DataPoint[] data = new DataPoint[n];
 		String[] inputKeys = {"A", "B"};
 		String[] outputKeys = {"Z"};
