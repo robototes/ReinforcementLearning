@@ -96,6 +96,10 @@ public class RandomDecisionTree {
 			}
 		}
 
+		if (minVarianceIndex == -1) {
+			return; // in case of error in minimizer
+		}
+		
 		for (int variable = 0; variable < variableSubset; variable++) { // reset array of used values for unused values
 			if (variable != minVarianceIndex) {
 				usedVariables[variable] = false;

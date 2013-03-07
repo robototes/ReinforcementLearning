@@ -20,7 +20,7 @@ public class Test {
 			double[] output = {outputValue};
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}
-		RandomDecisionTree tree = new RandomDecisionTree(data, 2, minimums, maximums);
+		RandomDecisionTree tree = new RandomDecisionTree(data, 1, minimums, maximums);
 		double[] input = {10, 30};
 		double output = tree.run(input);
 		System.out.println("output = " + output);
