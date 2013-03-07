@@ -37,14 +37,15 @@ public class RandomDecisionTree {
 	/**
 	 * A list of which variables have been used so far in the tree.
 	 */
-	boolean[] usedVariables = new boolean[numberOfVariables]; // list of used variables while building tree
+	boolean[] usedVariables; // list of used variables while building tree
 	
 	/**
 	 * An optimizer/minimizer class for minimizing variance at a split. <p />
 	 * {@link VarianceMinimizer}
 	 */
 	private VarianceMinimizer varianceMinimizer;
-
+	
+	
 	/**
 	 * Create a decision tree.
 	 * <p/>
@@ -53,6 +54,7 @@ public class RandomDecisionTree {
 	public RandomDecisionTree(DataPoint[] data, int variableSubset, double[] minimums, double[] maximums) {
 		this.variableSubset = variableSubset;
 		this.numberOfVariables = data[0].getInputKeys().length;
+		this.usedVariables = new boolean[numberOfVariables]; 
 
 		varianceMinimizer = new VarianceMinimizer(minimums, maximums);
 
@@ -75,15 +77,14 @@ public class RandomDecisionTree {
 		int totalCount = 0;
 		for (int variable = 0; variable < variableSubset; variable++) { // select variables to base split
 			int randomVariable = (int) (Math.random() * variableSubset);
-			if (usedVariables[randomVariable] == true) {
+			if (usedVariables[randomVariable]) {
 				variable--; // search again
+				if (++totalCount - variableSubset > variables.length) {
+					return;
+				}
 				continue;
 			} else {
-				if (++totalCount - variableSubset > variables.length) {
-					break;
-				} else {
-					usedVariables[randomVariable] = true;
-				}
+				usedVariables[randomVariable] = true;
 			}
 			varianceMinimizer.setDataSubset(dataSubset);
 			double suggestedCutoff = varianceMinimizer.bestSplit(randomVariable);
@@ -95,6 +96,10 @@ public class RandomDecisionTree {
 			}
 		}
 
+		if (minVarianceIndex == -1) {
+			return; // in case of error in minimizer
+		}
+		
 		for (int variable = 0; variable < variableSubset; variable++) { // reset array of used values for unused values
 			if (variable != minVarianceIndex) {
 				usedVariables[variable] = false;
@@ -108,7 +113,7 @@ public class RandomDecisionTree {
 		//extend tree
 		Node yes = new Node(average(positiveSubset)); // yes
 		Node no = new Node(average(negativeSubset)); // no
-		lastUsedNode.addChildren(yes, no, cutoff);
+		lastUsedNode.addChildren(yes, no, cutoff, minVarianceIndex);
 
 		if (positiveSubset.length > 5) { // stopping rule
 			lastUsedNode = yes;
@@ -127,22 +132,8 @@ public class RandomDecisionTree {
 	 * @param input the new value.
 	 * @return the tree's decision.
 	 */
-	public double run(double input) {
+	public double run(double[] input) {
 		return root.get(input);
-	}
-
-	/**
-	 * Fill an array with zeros
-	 * <p/>
-	 * @param size the size of the array
-	 * @return The array.
-	 */
-	private double[] zeros(int size) {
-		double[] toReturn = new double[size];
-		for (int i = 0; i < size; i++) {
-			toReturn[i] = 0;
-		}
-		return toReturn;
 	}
 
 	/**
@@ -153,10 +144,11 @@ public class RandomDecisionTree {
 	 */
 	private double average(DataPoint[] data) {
 		double sum = 0.0;
-		for (int i = 0; i < data.length; i++) {
+		double length = data.length; // for faster loop
+		for (int i = 0; i < length; i++) {
 			sum += data[i].getOutputs()[0];
 		}
-		return sum / data.length;
+		return sum / length;
 	}
 
 	/**
@@ -170,16 +162,26 @@ public class RandomDecisionTree {
 	 * @return the isolated data.
 	 */
 	private DataPoint[] getDataSubset(DataPoint[] currentData, int index, double cutoff, boolean positiveNode) {
-		DataPoint[] toReturn = null;
+		DataPoint[] toReturn = new DataPoint[0];
 		for (int i = 0; i < currentData.length; i++) {
 			double value = currentData[i].getInputs()[index];
-			if (value > cutoff && positiveNode) {
-				toReturn[i] = currentData[i];
-			}
-			if (value <= cutoff && !positiveNode) {
-				toReturn[i] = currentData[i];
+			if ((value > cutoff && positiveNode) || (value <= cutoff && !positiveNode)) {
+				toReturn = push(toReturn, currentData[i]);
 			}
 		}
 		return toReturn;
+	}	
+	
+	/**
+	 * Adds a data point on to the end of a list of data points.
+	 * @param current the current array.
+	 * @param newData the new data to push.
+	 * @return the new array with the new data.
+	 */
+	private DataPoint[] push(DataPoint[] current, DataPoint newData) {
+		DataPoint[] longer = new DataPoint[current.length + 1];
+		System.arraycopy(current, 0, longer, 0, current.length);
+		longer[current.length] = newData;
+		return longer;
 	}
 }

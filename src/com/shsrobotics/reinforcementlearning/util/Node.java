@@ -26,6 +26,11 @@ public class Node {
 	 * Represents whether or not the node has children.
 	 */
 	private boolean isLeaf = false;
+	
+	/**
+	 * The variable index of the split variable.
+	 */
+	private int variableIndex;
 
 	/**
 	 * Create a node.
@@ -42,11 +47,12 @@ public class Node {
 	 * @param no the node/branch to follow if no.
 	 * @param input the input cutoff value. 
 	 */
-	protected Node(Node yes, Node no, double input) {
+	protected Node(Node yes, Node no, double input, int variableIndex) {
 		isLeaf = false;
 		this.yes = yes;
 		this.no = no;
 		this.inputCutoff = input;
+		this.variableIndex = variableIndex;
 	}
 	
 	/**
@@ -55,8 +61,11 @@ public class Node {
 	 * @param no the negative node.
 	 * @param inputCutoff the input cutoff to use. 
 	 */
-	protected void addChildren(Node yes, Node no, double inputCutoff) {
-		this.output = output;
+	protected void addChildren(Node yes, Node no, double inputCutoff, int variableIndex) {
+		this.yes = yes;
+		this.no = no;
+		this.inputCutoff = inputCutoff;
+		this.variableIndex = variableIndex;
 		isLeaf = false;
 	}
 	
@@ -81,11 +90,11 @@ public class Node {
 	 * @param input the input to the node.
 	 * @return the value from further down the tree.
 	 */
-	protected double get(double input) {
+	protected double get(double[] input) {
 		if (isLeaf) {
 			return output;
 		} else {
-			if (input >= inputCutoff) {
+			if (input[variableIndex] >= inputCutoff) {
 				return yes.get(input);
 			} else {
 				return no.get(input);
