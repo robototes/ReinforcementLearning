@@ -13,39 +13,38 @@ public class RandomDecisionTree {
 	 * The root tree node. Data is run through the tree starting here.
 	 */
 	private static Node root;
-	
+
 	/**
 	 * A record of the last used node, for recursion purposes.
 	 */
 	private static Node lastUsedNode;
-	
+
 	/**
 	 * A list of variable keys, in String form.
 	 */
 	private String[] variables;
-	
+
 	/**
 	 * The number of variables to randomly select and use at each node.
 	 */
 	private int variableSubset;
-	
+
 	/**
 	 * The total number of variables.
 	 */
 	private int numberOfVariables;
-	
+
 	/**
 	 * A list of which variables have been used so far in the tree.
 	 */
 	boolean[] usedVariables; // list of used variables while building tree
-	
+
 	/**
 	 * An optimizer/minimizer class for minimizing variance at a split. <p />
 	 * {@link VarianceMinimizer}
 	 */
 	private VarianceMinimizer varianceMinimizer;
-	
-	
+
 	/**
 	 * Create a decision tree.
 	 * <p/>
@@ -54,7 +53,7 @@ public class RandomDecisionTree {
 	public RandomDecisionTree(DataPoint[] data, int variableSubset, double[] minimums, double[] maximums) {
 		this.variableSubset = variableSubset;
 		this.numberOfVariables = data[0].getInputKeys().length;
-		this.usedVariables = new boolean[numberOfVariables]; 
+		this.usedVariables = new boolean[numberOfVariables];
 
 		varianceMinimizer = new VarianceMinimizer(minimums, maximums);
 
@@ -99,7 +98,7 @@ public class RandomDecisionTree {
 		if (minVarianceIndex == -1) {
 			return; // in case of error in minimizer
 		}
-		
+
 		for (int variable = 0; variable < variableSubset; variable++) { // reset array of used values for unused values
 			if (variable != minVarianceIndex) {
 				usedVariables[variable] = false;
@@ -170,10 +169,11 @@ public class RandomDecisionTree {
 			}
 		}
 		return toReturn;
-	}	
-	
+	}
+
 	/**
 	 * Adds a data point on to the end of a list of data points.
+	 * <p/>
 	 * @param current the current array.
 	 * @param newData the new data to push.
 	 * @return the new array with the new data.

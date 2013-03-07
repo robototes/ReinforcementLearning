@@ -7,21 +7,22 @@ import com.shsrobotics.reinforcementlearning.util.DataPoint;
  * parameters.
  */
 public class VarianceMinimizer extends Optimizer {
-	
+
 	/**
 	 * Current data to use in minimization.
 	 */
 	private DataPoint[] data;
+
 	/**
-	 * How much data.
-	 * Used to save array lookups.
+	 * How much data. Used to save array lookups.
 	 */
 	private int dataLength;
+
 	/**
 	 * The current variable to use in minimization.
 	 */
 	private int variable;
-	
+
 	/**
 	 * The current best split value (cutoff).
 	 */
@@ -41,9 +42,10 @@ public class VarianceMinimizer extends Optimizer {
 	public double f(double[] input) {
 		return nodeVariance(input[0]); // variance in output value
 	}
-	
+
 	/**
 	 * Calculate the best split for the given variable.
+	 * <p/>
 	 * @return the split to minimize variance of a node.
 	 */
 	public double bestSplit(int variable) {
@@ -51,15 +53,16 @@ public class VarianceMinimizer extends Optimizer {
 		bestSplit = minimize()[0];
 		return bestSplit;
 	}
-	
+
 	/**
 	 * Get the entropy value associated with the best split.
+	 * <p/>
 	 * @return the lowest variance possible.
 	 */
 	public double getMinimumVariance() {
 		return nodeVariance(bestSplit);
 	}
-	
+
 	/**
 	 * Set the data to be used in the variance calculation.
 	 * <p/>
@@ -69,7 +72,7 @@ public class VarianceMinimizer extends Optimizer {
 		this.data = subset;
 		this.dataLength = subset.length; // local scope is faster lookup
 	}
-	
+
 	/**
 	 * Calculate the variance of a node split.
 	 * <p/>
@@ -128,9 +131,10 @@ public class VarianceMinimizer extends Optimizer {
 		}
 		return toReturn;
 	}
-	
+
 	/**
 	 * Adds a data point on to the end of a list of data points.
+	 * <p/>
 	 * @param current the current array.
 	 * @param newData the new data to push.
 	 * @return the new array with the new data.

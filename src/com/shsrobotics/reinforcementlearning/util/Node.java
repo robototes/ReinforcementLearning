@@ -2,31 +2,37 @@ package com.shsrobotics.reinforcementlearning.util;
 
 /**
  * A decision node in a decision tree.
+ * <p/>
  * @author Team 2412.
  */
 public class Node {
+
 	/**
 	 * The node to go to when the input exceeds the cutoff.
 	 */
 	private Node yes;
+
 	/**
 	 * The node to go to when the input fails to meet the cutoff.
 	 */
 	private Node no;
+
 	/**
 	 * The input cutoff.
 	 */
 	private double inputCutoff;
+
 	/**
 	 * The output value (for a leaf).
 	 */
 	private double output;
+
 	/**
-	 * Whether or not the node is acting as a leaf.
-	 * Represents whether or not the node has children.
+	 * Whether or not the node is acting as a leaf. Represents whether or not
+	 * the node has children.
 	 */
 	private boolean isLeaf = false;
-	
+
 	/**
 	 * The variable index of the split variable.
 	 */
@@ -34,18 +40,20 @@ public class Node {
 
 	/**
 	 * Create a node.
+	 * <p/>
 	 * @param output the output from the node
 	 */
 	protected Node(double output) {
 		isLeaf = true;
 		this.output = output;
-	}	
-	
+	}
+
 	/**
 	 * Create a node.
+	 * <p/>
 	 * @param yes the node/branch to follow if yes.
 	 * @param no the node/branch to follow if no.
-	 * @param input the input cutoff value. 
+	 * @param input the input cutoff value.
 	 */
 	protected Node(Node yes, Node no, double input, int variableIndex) {
 		isLeaf = false;
@@ -54,12 +62,13 @@ public class Node {
 		this.inputCutoff = input;
 		this.variableIndex = variableIndex;
 	}
-	
+
 	/**
 	 * Add children to the node.
+	 * <p/>
 	 * @param yes the positive node.
 	 * @param no the negative node.
-	 * @param inputCutoff the input cutoff to use. 
+	 * @param inputCutoff the input cutoff to use.
 	 */
 	protected void addChildren(Node yes, Node no, double inputCutoff, int variableIndex) {
 		this.yes = yes;
@@ -68,17 +77,19 @@ public class Node {
 		this.variableIndex = variableIndex;
 		isLeaf = false;
 	}
-	
+
 	/**
 	 * Get the Yes node.
+	 * <p/>
 	 * @return the node.
 	 */
 	protected Node getPositiveChild() {
 		return yes;
 	}
-	
+
 	/**
 	 * Get the No node.
+	 * <p/>
 	 * @return the node.
 	 */
 	protected Node getNegativeChild() {
@@ -87,6 +98,7 @@ public class Node {
 
 	/**
 	 * Recursively follow the tree to get a value.
+	 * <p/>
 	 * @param input the input to the node.
 	 * @return the value from further down the tree.
 	 */
