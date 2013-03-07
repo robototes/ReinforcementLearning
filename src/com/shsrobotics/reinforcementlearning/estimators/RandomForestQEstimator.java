@@ -33,20 +33,68 @@ public class RandomForestQEstimator {
 	}
 	
 	/**
-	 * Add data to the forest.
-	 * Will erase existing data and re-train forest. There should be at least
+	 * Add sample to the forest.
+	 * Will erase existing sample and re-train forest. There should be at least
 	 * twenty examples per variable in the set.
-	 * @param data the data to use to train the trees in the forest.
+	 * @param sample the sample to use to train the trees in the forest.
+	 * @return array of variable importance.
 	 */
-	public void addInitialData(DataPoint[] data) {
-		int sampleSize = (int) (0.666 * data.length);
-		int variableSubsetSize = data[0].getInputs().length;
+	public double[] addInitialData(DataPoint[] data) {
+		int sampleSize = data.length;
+		int variableSize = data[0].getInputs().length;
 		int numberOfTrees = forest.length;
+		
+		double[] variableImportance = zeros(variableSize);
 		for (int i = 0; i < numberOfTrees; i++) {
+			BootstrapSample sample = takeBootstrapSample(sampleSize, data);
 			// add new tree and train it
-			forest[i] = new RandomDecisionTree(bootstrapSample(sampleSize, data), 
-				variableSubsetSize, minimums, maximums);
+			forest[i] = new RandomDecisionTree(sample.sample, 
+				variableSize / 3, minimums, maximums);
+			
+			int oobCount = 0;
+			double sum = 0.0;
+			// use OOB data to find MSE
+			for (int j = 0; j < sampleSize; j++) {
+				if (sample.used[j]) { // data used in training
+					continue;
+				}
+				oobCount++;
+				DataPoint example = data[j];
+				double actual = run(example.getInputs());
+				double expected = example.getOutputs()[0];
+				sum += Math.pow(actual - expected, 2);
+			}
+			double treeMSE = sum / oobCount;
+			double[] variableMSE = new double[variableSize];
+			// randomly change variables to get MSE for each variable
+			for (int j = 0; j < variableSize; j++) {
+				sum = 0.0;
+				for (int k = 0; k < sampleSize; k++) {
+					if (sample.used[j]) { // data used in training
+						continue;
+					}
+					DataPoint example = data[k];
+					double[] inputs = example.getInputs();
+					// randomly change the variable
+					inputs[j] = (maximums[j] - minimums[j]) * Math.random() + minimums[j];
+					double actual = run(inputs);
+					double expected = example.getOutputs()[0];
+					sum += Math.pow(actual - expected, 2);
+				}
+				variableMSE[j] = sum / oobCount;
+			}
+			
+			// calculate variable importance
+			for (int j = 0; j < variableSize; j++) {
+				variableImportance[j] += variableMSE[j] - treeMSE;
+			}
 		}
+		
+		for (int i = 0; i < variableSize ; i++) {
+			variableImportance[i] /= numberOfTrees;
+		}
+		
+		return variableImportance;
 	}
 	
 	/**
@@ -65,18 +113,60 @@ public class RandomForestQEstimator {
 	
 	
 	/**
-	 * Take a bootstrap sample of the data. 
-	 * Data is sampled without replacement {@code size} number of times.
+	 * Take a bootstrap sample of the sample. 
+	 * Data is sampled with replacement {@code size} number of times.
 	 * @param size the size of the sample.
-	 * @param data the data to sample.
-	 * @return the sample of data.
+	 * @param sample the sample to sample.
+	 * @return the sample of sample. Index 1 is the sample, index 2 is the OOB sample.
 	 */
-	private DataPoint[] bootstrapSample(int size, DataPoint[] data) {
+	private BootstrapSample takeBootstrapSample(int size, DataPoint[] data) {
 		DataPoint[] sample = new DataPoint[size]; // n
 		int cases = data.length;
+		boolean[] used = new boolean[cases];
 		for (int i = 0; i < size; i++) { // sample n times with replacement
-			sample[i] = data[(int) Math.round(cases * Math.random())];
+			int index = (int) Math.round(cases * Math.random());
+			sample[i] = data[index];
+			used[index] = true;
 		}
-		return sample;
+		return new BootstrapSample(sample, used);
 	}
+	
+	/**
+	 * Holds result of a bootstrap sample.
+	 */
+	public class BootstrapSample {
+		/**
+		 * The sample.
+		 */
+		public DataPoint[] sample;
+		/**
+		 * List of which data points were used.
+		 */
+		public boolean[] used;
+		
+		/**
+		 * Create a bootstrap sample results list.
+		 * @param sample the data sample.
+		 * @param used a list of which data points were used.
+		 */
+		public BootstrapSample(DataPoint[] sample, boolean[] used) {
+			this.sample = sample;
+			this.used = used;
+		}
+	}
+	
+	/**
+	 * Fill an array with zeros
+	 * <p/>
+	 * @param size the size of the array
+	 * @return The array.
+	 */
+	private double[] zeros(int size) {
+		double[] toReturn = new double[size];
+		for (int i = 0; i < size; i++) {
+			toReturn[i] = 0;
+		}
+		return toReturn;
+	}
+
 }
