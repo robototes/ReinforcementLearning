@@ -55,7 +55,9 @@ public class RandomForestQEstimator {
 	 * @param data the data point to add.
 	 */
 	public void addNewData(DataPoint data) {
-		
+		int numberOfTrees = forest.length;
+		for (int i = 0; i < numberOfTrees; i++) {
+		} 
 	}
 	
 	public double run(double[] input) {
@@ -64,7 +66,7 @@ public class RandomForestQEstimator {
 		for (int i = 0; i < numberOfTrees; i++) {
 			sum += forest[i].run(input);
 		}
-		return sum / numberOfTrees;
+		return sum / numberOfTrees; // average each tree's output
 	}
 	
 	
