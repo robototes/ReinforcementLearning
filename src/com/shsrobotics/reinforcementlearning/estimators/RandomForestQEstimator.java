@@ -64,6 +64,7 @@ public class RandomForestQEstimator {
 		for (int i = 0; i < numberOfTrees; i++) {
 			sum += forest[i].run(input);
 		}
+		return sum / numberOfTrees;
 	}
 	
 	
