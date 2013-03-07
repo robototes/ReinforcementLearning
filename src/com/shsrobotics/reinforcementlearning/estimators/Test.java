@@ -18,10 +18,10 @@ public class Test {
 			double randA = Math.round(Math.random() * 100);
 			double randB = Math.round(Math.random() * 100);
 			double[] input = {randA, randB};
-			double[] output = {randA + randB};
+			double[] output = {(randA > randB) ? 20 : -5};
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}
-		RandomForestQEstimator forest = new RandomForestQEstimator(50, minimums, maximums);
+		RandomForestQEstimator forest = new RandomForestQEstimator(100, minimums, maximums);
 		double[] variableImportance = forest.addInitialData(data);
 		double[] input = {30, 50};
 		System.out.println("output: " + forest.run(input));

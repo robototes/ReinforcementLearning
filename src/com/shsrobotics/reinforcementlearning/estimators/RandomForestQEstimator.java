@@ -43,7 +43,7 @@ public class RandomForestQEstimator {
 	 */
 	public double[] addInitialData(DataPoint[] data) {
 		int sampleSize = data.length;
-		int variableSize = data[0].getInputs().length;
+		int variableSize = minimums.length;
 		int subsetSize = (int) Math.ceil((double) variableSize / 3);
 		int numberOfTrees = forest.length;
 		BootstrapSample[] samples = new BootstrapSample[numberOfTrees];		
@@ -53,9 +53,9 @@ public class RandomForestQEstimator {
 			forest[i] = new RandomDecisionTree(samples[i].sample, 
 				subsetSize, minimums, maximums);
 		}
-		
-		double[] variableImportance = zeros(variableSize);		
-		for (int i = 0; i < numberOfTrees; i++) {
+		if (true) return null;
+		double[] variableImportance = zeros(variableSize);	
+		for (int i = 0; i < numberOfTrees; i++) { // each sample
 			int oobCount = 0;
 			double sum = 0.0;
 			// use OOB data to find MSE
@@ -73,9 +73,9 @@ public class RandomForestQEstimator {
 			
 			// randomly change variables to get MSE for each variable
 			double[] variableMSE = new double[variableSize];
-			for (int j = 0; j < variableSize; j++) {
+			for (int j = 0; j < variableSize; j++) { // each variable
 				sum = 0.0;
-				for (int k = 0; k < sampleSize; k++) {
+				for (int k = 0; k < sampleSize; k++) { // each data point
 					if (samples[i].used[k] == true) { // data used in training
 						continue;
 					}
