@@ -96,4 +96,33 @@ public class Matrix {
 		return result;
 	}
 	
+	/**
+	 * Multiplies 2 Matrices using standard matrix multiplication.
+	 * @param left The Matrix on the left.
+	 * @param right The Matrix on the right.
+	 * @return The 2 Matrices multiplied together.
+	 */
+	
+	public static Matrix multiply(Matrix left, Matrix right) {
+		if ( left.body[0].length != right.body.length ) {
+			throw new MatrixSizeError("Colums of left Matrix did not match rows of right Matrix.", right.body.length, left.body[0].length);
+		}
+		
+		Matrix m = new Matrix(left.body.length, right.body[0].length);
+		
+		double temp;
+		
+		for ( int ri = 0; ri < m.body[0].length; ri++ ) {
+			for ( int ci = 0; ci < m.body.length; ci++ ) {
+				temp = 0;
+				for ( int i = 0; i < left.body[0].length; i++ ) {
+					temp += left.body[ri][i] * right.body[i][ci];
+				}
+				m.body[ri][ci] = temp;
+			}
+		}
+		
+		return m;
+	}
+	
 }
