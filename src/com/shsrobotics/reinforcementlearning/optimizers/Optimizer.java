@@ -35,7 +35,12 @@ public abstract class Optimizer {
 	 * Step size for Pattern Search algorithm.
 	 * Defaults to ten percent of average variable range.
 	 */
-	private double PatternSearchStep;
+	private double PatternSearchStep;	
+	/**
+	 * Stores the default search step size.
+	 * Defaults to ten percent of average variable range.
+	 */
+	private double InitialStep;
 	
 	/**
 	 * Create an optimizer.
@@ -55,7 +60,7 @@ public abstract class Optimizer {
 		for (int variable = 0; variable < n; variable++) {
 			sum += 0.1 * (maximums[variable] - minimums[variable]); // ten percent of the range
 		}
-		PatternSearchStep = sum / n;
+		InitialStep = sum / n;
 	}
 	
 	
@@ -65,6 +70,7 @@ public abstract class Optimizer {
 	 * @return the maximized coordinates.
 	 */
 	public double[] maximize() {
+		PatternSearchStep = InitialStep;
 		return psOptimize(true);
 	}
 	
@@ -73,6 +79,7 @@ public abstract class Optimizer {
 	 * @return the minimized coordinates.
 	 */
 	public double[] minimize() {
+		PatternSearchStep = InitialStep;
 		return psOptimize(false);
 	}
 
