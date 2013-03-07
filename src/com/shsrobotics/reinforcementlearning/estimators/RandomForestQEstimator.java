@@ -30,6 +30,8 @@ public class RandomForestQEstimator {
 	 */
 	public RandomForestQEstimator(int trees, double[] minimums, double[] maximums) {
 		this.forest = new RandomDecisionTree[trees];
+		this.minimums = minimums;
+		this.maximums = maximums;
 	}
 	
 	/**
@@ -124,7 +126,7 @@ public class RandomForestQEstimator {
 		int cases = data.length;
 		boolean[] used = new boolean[cases];
 		for (int i = 0; i < size; i++) { // sample n times with replacement
-			int index = (int) Math.round(cases * Math.random());
+			int index = (int) (cases * Math.random());
 			sample[i] = data[index];
 			used[index] = true;
 		}
