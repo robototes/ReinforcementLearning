@@ -50,16 +50,10 @@ public class RandomForestQEstimator {
 	}
 	
 	/**
-	 * Add a single data point. 
-	 * The data point will be used to adjust cutoff values in each tree.
-	 * @param data the data point to add.
+	 * Get the random forest prediction.
+	 * @param input the input value.
+	 * @return the random forest output.
 	 */
-	public void addNewData(DataPoint data) {
-		int numberOfTrees = forest.length;
-		for (int i = 0; i < numberOfTrees; i++) {
-		} 
-	}
-	
 	public double run(double[] input) {
 		double sum = 0.0;
 		int numberOfTrees = forest.length;
@@ -68,7 +62,6 @@ public class RandomForestQEstimator {
 		}
 		return sum / numberOfTrees; // average each tree's output
 	}
-	
 	
 	
 	/**
