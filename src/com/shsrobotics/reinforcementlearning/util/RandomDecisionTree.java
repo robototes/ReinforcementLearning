@@ -44,7 +44,8 @@ public class RandomDecisionTree {
 	 * {@link VarianceMinimizer}
 	 */
 	private VarianceMinimizer varianceMinimizer;
-
+	
+	
 	/**
 	 * Create a decision tree.
 	 * <p/>
@@ -129,20 +130,6 @@ public class RandomDecisionTree {
 	 */
 	public double run(double[] input) {
 		return root.get(input);
-	}
-
-	/**
-	 * Fill an array with zeros
-	 * <p/>
-	 * @param size the size of the array
-	 * @return The array.
-	 */
-	private double[] zeros(int size) {
-		double[] toReturn = new double[size];
-		for (int i = 0; i < size; i++) {
-			toReturn[i] = 0;
-		}
-		return toReturn;
 	}
 
 	/**

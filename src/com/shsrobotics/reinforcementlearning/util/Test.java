@@ -16,7 +16,8 @@ public class Test {
 			double randA = Math.round(100 * Math.random());
 			double randB = Math.round(100 * Math.random());
 			double[] input = {randA, randB};
-			double[] output = {randA + randB};
+			double outputValue = (randA > 50) ? 20 : -5;
+			double[] output = {outputValue};
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}
 		RandomDecisionTree tree = new RandomDecisionTree(data, 2, minimums, maximums);

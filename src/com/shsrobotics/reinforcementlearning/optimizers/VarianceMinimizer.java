@@ -34,7 +34,7 @@ public class VarianceMinimizer extends Optimizer {
 	 * @param maximums maximum variable values.
 	 */
 	public VarianceMinimizer(double[] minimums, double[] maximums) {
-		super(24, minimums, maximums);
+		super(16, minimums, maximums);
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class VarianceMinimizer extends Optimizer {
 
 		//find average
 		for (int i = 0; i < subsetLength; i++) {
-			sum += subset[i].getInputs()[variable];
+			sum += subset[i].getOutputs()[0];
 		}
 		double mean = sum / subsetLength;
 
