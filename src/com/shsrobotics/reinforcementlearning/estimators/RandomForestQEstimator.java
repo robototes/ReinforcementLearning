@@ -45,19 +45,21 @@ public class RandomForestQEstimator {
 		int sampleSize = data.length;
 		int variableSize = data[0].getInputs().length;
 		int numberOfTrees = forest.length;
-		
-		double[] variableImportance = zeros(variableSize);
+		BootstrapSample[] samples = new BootstrapSample[numberOfTrees];		
 		for (int i = 0; i < numberOfTrees; i++) {
-			BootstrapSample sample = takeBootstrapSample(sampleSize, data);
+			samples[i] = takeBootstrapSample(sampleSize, data);
 			// add new tree and train it
-			forest[i] = new RandomDecisionTree(sample.sample, 
+			forest[i] = new RandomDecisionTree(samples[i].sample, 
 				variableSize / 3, minimums, maximums);
-			
+		}
+		
+		double[] variableImportance = zeros(variableSize);		
+		for (int i = 0; i < numberOfTrees; i++) {
 			int oobCount = 0;
 			double sum = 0.0;
 			// use OOB data to find MSE
 			for (int j = 0; j < sampleSize; j++) {
-				if (sample.used[j]) { // data used in training
+				if (samples[i].used[j]) { // data used in training
 					continue;
 				}
 				oobCount++;
@@ -72,7 +74,7 @@ public class RandomForestQEstimator {
 			for (int j = 0; j < variableSize; j++) {
 				sum = 0.0;
 				for (int k = 0; k < sampleSize; k++) {
-					if (sample.used[j]) { // data used in training
+					if (samples[i].used[j]) { // data used in training
 						continue;
 					}
 					DataPoint example = data[k];
@@ -86,7 +88,7 @@ public class RandomForestQEstimator {
 				variableMSE[j] = sum / oobCount;
 			}
 			
-			// calculate variable importance
+			// calculate variable importance based on MSE difference
 			for (int j = 0; j < variableSize; j++) {
 				variableImportance[j] += variableMSE[j] - treeMSE;
 			}
