@@ -39,7 +39,7 @@ public class VarianceMinimizer extends Optimizer {
 
 	@Override
 	public double f(double[] input) {
-		return nodeVariance(input[0]);
+		return nodeVariance(input[0]); // variance in output value
 	}
 	
 	/**
@@ -82,7 +82,7 @@ public class VarianceMinimizer extends Optimizer {
 		double positiveStdDev = individualSampleVariance(positiveSubset);
 		double negativeStdDev = individualSampleVariance(negativeSubset);
 
-		return (positiveStdDev + negativeStdDev) / 2; // average of standard devations
+		return positiveStdDev + negativeStdDev; // average of standard devations
 	}
 
 	/**
