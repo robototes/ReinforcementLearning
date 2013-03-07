@@ -1,5 +1,10 @@
 package com.shsrobotics.reinforcementlearning.math;
 
+/**
+ * Just an implementation of the {@link Matrix} interface.
+ * 
+ * @author Max
+ */
 
 public class BasicMatrix implements Matrix {
 	
