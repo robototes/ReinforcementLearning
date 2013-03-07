@@ -78,13 +78,12 @@ public class RandomDecisionTree {
 			int randomVariable = (int) (Math.random() * variableSubset);
 			if (usedVariables[randomVariable]) {
 				variable--; // search again
-				continue;
-			} else {
 				if (++totalCount - variableSubset > variables.length) {
 					break;
-				} else {
-					usedVariables[randomVariable] = true;
 				}
+				continue;
+			} else {
+				usedVariables[randomVariable] = true;
 			}
 			varianceMinimizer.setDataSubset(dataSubset);
 			double suggestedCutoff = varianceMinimizer.bestSplit(randomVariable);
