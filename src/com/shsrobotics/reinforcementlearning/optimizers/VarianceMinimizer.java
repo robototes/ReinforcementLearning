@@ -35,7 +35,7 @@ public class VarianceMinimizer extends Optimizer {
 	 * @param maximums maximum variable values.
 	 */
 	public VarianceMinimizer(double[] minimums, double[] maximums) {
-		super((int) (0.5 * (24 + Math.pow(minimums.length, 2))), minimums, maximums);
+		super(12, minimums, maximums);
 	}
 
 	@Override
