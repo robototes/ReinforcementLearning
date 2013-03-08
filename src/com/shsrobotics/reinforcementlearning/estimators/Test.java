@@ -8,9 +8,9 @@ public class Test {
 	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
-		int n = 100;
+		int n = 250;
 		DataPoint[] data = new DataPoint[n];
-		String[] inputKeys = {"A", "B"};
+		String[] inputKeys = {"A", "B", "C"};
 		String[] outputKeys = {"Z"};
 		double[] minimums = {0, 0};
 		double[] maximums = {100, 100};
@@ -18,12 +18,19 @@ public class Test {
 			double randA = Math.round(Math.random() * 100);
 			double randB = Math.round(Math.random() * 100);
 			double[] input = {randA, randB};
-			double[] output = {(randA > 50) ? 1 : -1};
+			double z = 0;
+			if (randA > 80) {
+				z += 10;
+			}
+			if (randB < 60) {
+				z -= 4;	
+			}
+			double[] output = {z};
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}
-		RandomForestQEstimator forest = new RandomForestQEstimator(10, minimums, maximums);
+		RandomForestQEstimator forest = new RandomForestQEstimator(100, minimums, maximums, 3);
 		forest.addInitialData(data);
-		double[] input = {40, 0};
+		double[] input = {90, 00};
 		System.out.println("output: " + forest.run(input));
 	}
 }

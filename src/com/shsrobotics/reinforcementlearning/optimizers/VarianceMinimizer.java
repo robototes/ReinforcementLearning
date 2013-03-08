@@ -62,6 +62,16 @@ public class VarianceMinimizer extends Optimizer {
 	public double getMinimumVariance() {
 		return nodeVariance(bestSplit);
 	}
+	
+	/**
+	 * Get the entropy value associated with a split.
+	 * <p/>
+	 * @param split the split value.
+	 * @return the lowest variance possible.
+	 */
+	public double getVariance(double split) {
+		return nodeVariance(split);
+	}
 
 	/**
 	 * Set the data to be used in the variance calculation.

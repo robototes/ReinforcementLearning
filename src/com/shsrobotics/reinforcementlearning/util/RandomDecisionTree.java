@@ -37,8 +37,19 @@ public class RandomDecisionTree {
 	/**
 	 * A list of which variables have been used so far in the tree.
 	 */
-	boolean[] usedVariables; // list of used variables while building tree
-
+	private boolean[] usedVariables; // list of used variables while building tree
+	
+	/**
+	 * Maximum node depth of the tree.
+	 */
+	private int maxDepth;
+	
+	/**
+	 * Current depth of the recursive builder.
+	 */
+	private int currentDepth;
+	
+	
 	/**
 	 * An optimizer/minimizer class for minimizing variance at a split. <p />
 	 * {@link VarianceMinimizer}
@@ -50,13 +61,15 @@ public class RandomDecisionTree {
 	 * <p/>
 	 * @param data the decision tree data.
 	 */
-	public RandomDecisionTree(DataPoint[] data, int variableSubset, double[] minimums, double[] maximums) {
+	public RandomDecisionTree(DataPoint[] data, int variableSubset, double[] minimums, double[] maximums, int maxDepth) {
 		this.variableSubset = variableSubset;
-		this.numberOfVariables = data[0].getInputKeys().length;
+		this.numberOfVariables = minimums.length;
 		this.usedVariables = new boolean[numberOfVariables];
+		this.maxDepth = maxDepth;
 
 		varianceMinimizer = new VarianceMinimizer(minimums, maximums);
 
+		currentDepth = 0;
 		root = new Node(0.0);
 		lastUsedNode = root;
 		buildTree(data); // start building tree
@@ -76,6 +89,9 @@ public class RandomDecisionTree {
 		int totalCount = 0;
 		for (int variable = 0; variable < variableSubset; variable++) { // select variables to base split
 			int randomVariable = (int) (Math.random() * variableSubset);
+			if (currentDepth++ == maxDepth) {
+				return;
+			}
 			if (usedVariables[randomVariable]) {
 				variable--; // search again
 				if (++totalCount - variableSubset > variables.length) { // no variables left

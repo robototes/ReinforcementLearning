@@ -25,14 +25,20 @@ public class RandomForestQEstimator {
 	 * Maximum input values.
 	 */
 	private double[] maximums;
+	
+	/**
+	 * The maximum depth of each tree.
+	 */
+	private int maxDepth;
 
 	/**
 	 * Create a Random Forest machine learner to estimate values.
 	 * <p/>
 	 * @param trees the number of trees in the forest.
 	 */
-	public RandomForestQEstimator(int trees, double[] minimums, double[] maximums) {
+	public RandomForestQEstimator(int trees, double[] minimums, double[] maximums, int maxDepth) {
 		this.forest = new RandomDecisionTree[trees];
+		this.maxDepth = maxDepth;
 		this.minimums = minimums;
 		this.maximums = maximums;
 	}
@@ -48,7 +54,7 @@ public class RandomForestQEstimator {
 		int sampleSize = data.length;
 		int variableSize = minimums.length;
 		int numberOfTrees = forest.length;
-		int subsetSize = 1;//(int) Math.ceil((double) 10 / numberOfTrees + variableSize / 3);
+		int subsetSize = (int) Math.ceil((double) variableSize / 3);
 		if (subsetSize > variableSize) { // happens
 			subsetSize = variableSize;
 		}
@@ -57,7 +63,7 @@ public class RandomForestQEstimator {
 			samples[i] = takeBootstrapSample(sampleSize, data);
 			// add new tree and train it
 			forest[i] = new RandomDecisionTree(samples[i].sample,
-				subsetSize, minimums, maximums);
+				subsetSize, minimums, maximums, maxDepth);
 		}
 	}
 
