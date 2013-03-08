@@ -44,7 +44,7 @@ public class RandomForestQEstimator {
 	 * @param sample the sample to use to train the trees in the forest.
 	 * @return array of variable importance.
 	 */
-	public double[] addInitialData(DataPoint[] data) {
+	public void addInitialData(DataPoint[] data) {
 		int sampleSize = data.length;
 		int variableSize = minimums.length;
 		int numberOfTrees = forest.length;
@@ -59,53 +59,6 @@ public class RandomForestQEstimator {
 			forest[i] = new RandomDecisionTree(samples[i].sample,
 				subsetSize, minimums, maximums);
 		}
-		double[] variableImportance = new double[variableSize];
-		for (int i = 0; i < numberOfTrees; i++) { // each sample
-			int oobCount = 0;
-			double treeMseSum = 0.0;
-			// use OOB data to find MSE
-			for (int j = 0; j < sampleSize; j++) {
-				if (samples[i].used[j]) { // data used in training
-					continue;
-				}
-				oobCount++;
-				DataPoint example = data[j];
-				double actual = run(example.getInputs());
-				double expected = example.getOutputs()[0];
-				treeMseSum += Math.pow(actual - expected, 2);
-			}
-			double treeMSE = treeMseSum / oobCount;
-			
-			// randomly change variables to get MSE for each variable
-			double[] variableMSE = new double[variableSize];
-			for (int j = 0; j < variableSize; j++) { // each variable
-				double variableMseSum = 0.0;
-				for (int k = 0; k < sampleSize; k++) { // each data point
-					if (samples[i].used[k]) { // data used in training
-						continue;
-					}
-					DataPoint example = data[k];
-					double[] inputs = example.getInputs().clone();
-					// randomly change the variable
-					inputs[j] = (maximums[j] - minimums[j]) * Math.random() + minimums[j];
-					double actual = run(inputs);
-					double expected = example.getOutputs()[0];
-					variableMseSum += Math.pow(actual - expected, 2);
-				}
-				variableMSE[j] = variableMseSum / oobCount;
-			}
-
-			// calculate variable importance based on MSE difference
-			for (int j = 0; j < variableSize; j++) {
-				variableImportance[j] += variableMSE[j] - treeMSE;
-			}
-		}
-
-		for (int i = 0; i < variableSize; i++) {
-			variableImportance[i] /= numberOfTrees;
-		}
-
-		return variableImportance;
 	}
 
 	/**

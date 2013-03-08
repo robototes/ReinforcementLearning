@@ -22,7 +22,7 @@ public class Test {
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}
 		RandomForestQEstimator forest = new RandomForestQEstimator(10, minimums, maximums);
-		double[] variableImportance = forest.addInitialData(data);
+		forest.addInitialData(data);
 		double[] input = {40, 0};
 		System.out.println("output: " + forest.run(input));
 	}
