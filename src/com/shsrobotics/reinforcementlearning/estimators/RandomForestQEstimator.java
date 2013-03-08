@@ -47,8 +47,11 @@ public class RandomForestQEstimator {
 	public double[] addInitialData(DataPoint[] data) {
 		int sampleSize = data.length;
 		int variableSize = minimums.length;
-		int subsetSize = (int) Math.ceil((double) variableSize / 3);
 		int numberOfTrees = forest.length;
+		int subsetSize = 1;//(int) Math.ceil((double) 10 / numberOfTrees + variableSize / 3);
+		if (subsetSize > variableSize) { // happens
+			subsetSize = variableSize;
+		}
 		BootstrapSample[] samples = new BootstrapSample[numberOfTrees];
 		for (int i = 0; i < numberOfTrees; i++) {
 			samples[i] = takeBootstrapSample(sampleSize, data);
@@ -56,13 +59,10 @@ public class RandomForestQEstimator {
 			forest[i] = new RandomDecisionTree(samples[i].sample,
 				subsetSize, minimums, maximums);
 		}
-		if (true) {
-			return null;
-		}
-		double[] variableImportance = zeros(variableSize);
+		double[] variableImportance = new double[variableSize];
 		for (int i = 0; i < numberOfTrees; i++) { // each sample
 			int oobCount = 0;
-			double sum = 0.0;
+			double treeMseSum = 0.0;
 			// use OOB data to find MSE
 			for (int j = 0; j < sampleSize; j++) {
 				if (samples[i].used[j]) { // data used in training
@@ -72,16 +72,16 @@ public class RandomForestQEstimator {
 				DataPoint example = data[j];
 				double actual = run(example.getInputs());
 				double expected = example.getOutputs()[0];
-				sum += Math.pow(actual - expected, 2);
+				treeMseSum += Math.pow(actual - expected, 2);
 			}
-			double treeMSE = sum / oobCount;
-
+			double treeMSE = treeMseSum / oobCount;
+			
 			// randomly change variables to get MSE for each variable
 			double[] variableMSE = new double[variableSize];
 			for (int j = 0; j < variableSize; j++) { // each variable
-				sum = 0.0;
+				double variableMseSum = 0.0;
 				for (int k = 0; k < sampleSize; k++) { // each data point
-					if (samples[i].used[k] == true) { // data used in training
+					if (samples[i].used[k]) { // data used in training
 						continue;
 					}
 					DataPoint example = data[k];
@@ -90,9 +90,9 @@ public class RandomForestQEstimator {
 					inputs[j] = (maximums[j] - minimums[j]) * Math.random() + minimums[j];
 					double actual = run(inputs);
 					double expected = example.getOutputs()[0];
-					sum += Math.pow(actual - expected, 2);
+					variableMseSum += Math.pow(actual - expected, 2);
 				}
-				variableMSE[j] = sum / oobCount;
+				variableMSE[j] = variableMseSum / oobCount;
 			}
 
 			// calculate variable importance based on MSE difference
@@ -115,12 +115,12 @@ public class RandomForestQEstimator {
 	 * @return the random forest output.
 	 */
 	public double run(double[] input) {
-		double sum = 0.0;
+		double treeAverageSum = 0.0;
 		int numberOfTrees = forest.length;
 		for (int i = 0; i < numberOfTrees; i++) {
-			sum += forest[i].run(input);
+			treeAverageSum += forest[i].run(input);
 		}
-		return sum / numberOfTrees; // average each tree's output
+		return treeAverageSum / numberOfTrees; // average each tree's output
 	}
 
 	/**
@@ -169,19 +169,5 @@ public class RandomForestQEstimator {
 			this.sample = sample;
 			this.used = used;
 		}
-	}
-
-	/**
-	 * Fill an array with zeros
-	 * <p/>
-	 * @param size the size of the array
-	 * @return The array.
-	 */
-	private double[] zeros(int size) {
-		double[] toReturn = new double[size];
-		for (int i = 0; i < size; i++) {
-			toReturn[i] = 0;
-		}
-		return toReturn;
 	}
 }
