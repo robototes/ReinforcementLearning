@@ -20,11 +20,6 @@ public class RandomDecisionTree {
 	private static Node lastUsedNode;
 
 	/**
-	 * A list of variable keys, in String form.
-	 */
-	private String[] variables;
-
-	/**
 	 * The number of variables to randomly select and use at each node.
 	 */
 	private int variableSubset;
@@ -81,8 +76,6 @@ public class RandomDecisionTree {
 	 * @param dataSubset the data to build the tree with.
 	 */
 	private void buildTree(DataPoint[] dataSubset) {
-		variables = dataSubset[0].getInputKeys();
-
 		double minVariance = Double.POSITIVE_INFINITY;
 		double cutoff = 0;
 		int minVarianceIndex = -1;
@@ -94,7 +87,7 @@ public class RandomDecisionTree {
 			}
 			if (usedVariables[randomVariable]) {
 				variable--; // search again
-				if (++totalCount - variableSubset > variables.length) { // no variables left
+				if (++totalCount - variableSubset > numberOfVariables) { // no variables left
 					return;
 				}
 				continue;

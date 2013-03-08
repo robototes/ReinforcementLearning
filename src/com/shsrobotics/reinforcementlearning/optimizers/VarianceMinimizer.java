@@ -92,10 +92,10 @@ public class VarianceMinimizer extends Optimizer {
 	private double nodeVariance(double split) {
 		DataPoint[] positiveSubset = getDataSubset(split, true); // yes node
 		DataPoint[] negativeSubset = getDataSubset(split, false); // no node
-		double positiveStdDev = individualSampleVariance(positiveSubset);
-		double negativeStdDev = individualSampleVariance(negativeSubset);
+		double positiveVariance = individualSampleVariance(positiveSubset);
+		double negativeVariance = individualSampleVariance(negativeSubset);
 
-		return positiveStdDev + negativeStdDev; // average of standard devations
+		return positiveVariance + negativeVariance; //sum of standard devations
 	}
 
 	/**
