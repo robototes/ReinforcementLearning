@@ -31,12 +31,16 @@ public abstract class Optimizer {
 	 * Step size for Pattern Search algorithm. Defaults to ten percent of
 	 * average variable range.
 	 */
-	private double PatternSearchStep;
+	private double[] PatternSearchStep;
 	/**
 	 * Stores the default search step size. Defaults to a quarter of average
-	 * variable range, for a total range of one-half the search size.
+	 * variable range, for a total range of a quarter of the search size.
 	 */
-	private double InitialStep;
+	private double[] InitialStep;
+	/**
+	 * Default step size fraction.
+	 */
+	private double stepSize = 0.25;
 
 	/**
 	 * Create an optimizer.
@@ -52,12 +56,13 @@ public abstract class Optimizer {
 		this.minimums = minimums;
 		this.maximums = maximums;
 
-		//find average step size
-		double sum = 0;
+		PatternSearchStep = new double[n];
+		InitialStep = new double[n];
+
+		//find step size
 		for (int variable = 0; variable < n; variable++) {
-			sum += 0.25 * (maximums[variable] - minimums[variable]); // twenty-five percent of the range
+			InitialStep[variable] = stepSize * (maximums[variable] - minimums[variable]); // twenty-five percent of the range
 		}
-		InitialStep = sum / n;
 	}
 
 	/**
@@ -66,7 +71,7 @@ public abstract class Optimizer {
 	 * @return the maximized coordinates.
 	 */
 	public double[] maximize() {
-		PatternSearchStep = InitialStep;
+		PatternSearchStep = InitialStep.clone();
 		return psOptimize(true);
 	}
 
@@ -76,7 +81,7 @@ public abstract class Optimizer {
 	 * @return the minimized coordinates.
 	 */
 	public double[] minimize() {
-		PatternSearchStep = InitialStep;
+		PatternSearchStep = InitialStep.clone();
 		return psOptimize(false);
 	}
 
@@ -110,8 +115,10 @@ public abstract class Optimizer {
 		for (int k = 0; k < n; k++) {
 			int leftPoint = k + 1;
 			int rightPoint = k + 1 + n;
-			vertices[leftPoint].increment(k, -PatternSearchStep);
-			vertices[rightPoint].increment(k, PatternSearchStep);
+			vertices[leftPoint].increment(k, -PatternSearchStep[k]);
+			vertices[leftPoint].update();
+			vertices[rightPoint].increment(k, PatternSearchStep[k]);
+			vertices[rightPoint].update();
 		}
 
 		for (int i = 0; i < iterations; i++) {
@@ -123,16 +130,40 @@ public abstract class Optimizer {
 					bestIndex = vertex;
 				}
 			}
-			
-			// move pattern
-			double[] changes = new double[n];
-			for (int k = 0; k < n; k++) {
-				changes[k] = vertices[bestIndex].coordinates[k]
-					- vertices[0].coordinates[k];
-			}
-			for (int vertex = 0; vertex < length; vertex++) {
+			if (bestIndex == 0) {
+				// scale pattern
 				for (int k = 0; k < n; k++) {
-					vertices[vertex].increment(k, changes[k]);
+					PatternSearchStep[k] /= 2; // halve search size.
+					int leftPoint = k + 1;
+					int rightPoint = k + 1 + n;
+					vertices[leftPoint].increment(k, PatternSearchStep[k]);
+					vertices[leftPoint].update();
+					vertices[rightPoint].increment(k, -PatternSearchStep[k]);
+					vertices[rightPoint].update();
+				}
+			} else {
+				// move pattern
+				int variable = (bestIndex - 1) % n; // the variable to change
+				int direction = (bestIndex - 1 - n > 0) ? 1 : -1; // which way to move
+				
+				int oppositeVertex; // find which vertex index corresponds to the opposite vertex
+				if (direction == 1) {
+					oppositeVertex = variable + 1;
+				} else {
+					oppositeVertex = variable + 1 + n;
+				}
+				
+				double change = direction * PatternSearchStep[variable]; // difference between best and center
+				for (int vertex = 0; vertex < length; vertex++) {
+					vertices[vertex].increment(variable, change);
+					// save re-evaluation of function
+					if (vertex == 0) { 
+						vertices[vertex].setValue(vertices[bestIndex].value); 
+					} else if (vertex == oppositeVertex) {
+						vertices[vertex].setValue(vertices[0].value); 
+					} else {
+						vertices[vertex].update(); // for new values
+					}
 				}
 			}
 		}
@@ -173,16 +204,27 @@ public abstract class Optimizer {
 		}
 
 		/**
-		 * Increment a coordinate by a specified amount.
+		 * Set the {@code value} variable. If the value is known, save the time
+		 * updating it.
+		 */
+		public void setValue(double value) {
+			this.value = value;
+		}
+
+		/**
+		 * Increment a coordinate by a specified amount. A call to
+		 * {@code update} is recommended afterwards.
 		 * <p/>
 		 * @param k the coordinate variable to change.
 		 * @param amount the amount to increment by.
 		 */
 		public void increment(int k, double amount) {
 			double[] newCoordinates = this.coordinates.clone();
-			newCoordinates[k] += amount;
+			double newCoordinate = newCoordinates[k] + amount;
+			if (newCoordinate > minimums[k] && newCoordinate < maximums[k]) { //in bounds
+				newCoordinates[k] = newCoordinate;
+			}
 			this.coordinates = newCoordinates.clone();
-			update();
 		}
 	}
 
@@ -210,13 +252,13 @@ public abstract class Optimizer {
 	 * <p/>
 	 * @return The array.
 	 */
-	private double[] rands() {
+	double[] rands() {
 		double[] toReturn = new double[n];
-		double rangeScale = (1 - 2 * InitialStep);
+		double rangeScale = 2 * stepSize;
 		for (int i = 0; i < n; i++) {
-			double range = (maximums[i] - minimums[i]);
-			toReturn[i] = Math.random() * range * rangeScale
-				+ minimums[i] + InitialStep * range; // generate random number in range
+			double range = (maximums[i] - minimums[i]) * rangeScale;
+			toReturn[i] = Math.random() * range
+				+ minimums[i] + range / 2; // generate random number in range
 		}
 		return toReturn;
 	}
