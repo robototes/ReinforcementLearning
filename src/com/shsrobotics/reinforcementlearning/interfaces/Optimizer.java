@@ -1,19 +1,23 @@
 package com.shsrobotics.reinforcementlearning.interfaces;
 
-import com.shsrobotics.reinforcementlearning.util.DataPoint;
-
+/**
+ * Optimizes a series of coordinates to either maximize or minimize a given 
+ * function.
+ * <p/>
+ * @author team 2412.
+ */
 public abstract class Optimizer {	
 	/**
 	 * Minimize the function.
 	 * @return the minimized coordinates
 	 */
-	public abstract DataPoint[] minimize();
+	public abstract double[] minimize();
 	
 	/**
 	 * Minimize the function.
 	 * @return the maximized coordinates.
 	 */
-	public abstract DataPoint[] maximize();
+	public abstract double[] maximize();
 	
 	/**
 	 * The function to optimize.

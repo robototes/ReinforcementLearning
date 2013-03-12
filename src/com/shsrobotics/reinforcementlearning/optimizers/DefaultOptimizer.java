@@ -1,5 +1,7 @@
 package com.shsrobotics.reinforcementlearning.optimizers;
 
+import com.shsrobotics.reinforcementlearning.interfaces.Optimizer;
+
 /**
  * Optimize coordinates based on a Pattern Search algorithm. To use this class,
  * classes must extend it and provide a {@code double f(double[] input)} method.
@@ -9,7 +11,7 @@ package com.shsrobotics.reinforcementlearning.optimizers;
  * <p/>
  * @author Team 2412.
  */
-public abstract class DefaultOptimizer {
+public abstract class DefaultOptimizer extends Optimizer {
 
 	/**
 	 * The number of variables to optimize. Data dimensions.
@@ -70,6 +72,7 @@ public abstract class DefaultOptimizer {
 	 * <p/>
 	 * @return the maximized coordinates.
 	 */
+	@Override
 	public double[] maximize() {
 		PatternSearchStep = InitialStep.clone();
 		return psOptimize(true);
@@ -80,6 +83,7 @@ public abstract class DefaultOptimizer {
 	 * <p/>
 	 * @return the minimized coordinates.
 	 */
+	@Override
 	public double[] minimize() {
 		PatternSearchStep = InitialStep.clone();
 		return psOptimize(false);
@@ -270,5 +274,6 @@ public abstract class DefaultOptimizer {
 	 * @param input the input values (domain).
 	 * @return the result (range).
 	 */
+	@Override
 	public abstract double f(double[] input);
 }
