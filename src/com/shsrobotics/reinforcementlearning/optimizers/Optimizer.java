@@ -1,49 +1,50 @@
 package com.shsrobotics.reinforcementlearning.optimizers;
 
 /**
- * Optimize coordinates based on a Pattern Search algorithm.
- * To use this class, classes must extend it and provide 
- * a {@code double f(double[] input)} method. Method calls should be
- * made to {@code minimize()} and {@code maximize()} only.  Other members
- * are public only for extension and implementation purposes.
+ * Optimize coordinates based on a Pattern Search algorithm. To use this class,
+ * classes must extend it and provide a {@code double f(double[] input)} method.
+ * Method calls should be made to {@code minimize()} and {@code maximize()}
+ * only. Other members are public only for extension and implementation
+ * purposes.
+ * <p/>
  * @author Team 2412.
  */
 public abstract class Optimizer {
+
 	/**
-	 * The number of variables to optimize.
-	 * Data dimensions.
+	 * The number of variables to optimize. Data dimensions.
 	 */
-	private final int n; 
+	private final int n;
 	/**
 	 * How many times to run the algorithm
 	 */
 	private final int iterations;
-	
 	/**
-	 * Minimum variable values.
-	 * Used to choose random starting points.
+	 * Minimum variable values. Used to choose random starting points.
 	 */
 	private final double[] minimums;
 	/**
-	 * Maximum Variable values.
-	 * Used to choose random starting points.
+	 * Maximum Variable values. Used to choose random starting points.
 	 */
 	private final double[] maximums;
-	
-		
 	/**
-	 * Step size for Pattern Search algorithm.
-	 * Defaults to ten percent of average variable range.
+	 * Step size for Pattern Search algorithm. Defaults to ten percent of
+	 * average variable range.
 	 */
-	private double PatternSearchStep;	
+	private double[] PatternSearchStep;
 	/**
-	 * Stores the default search step size.
-	 * Defaults to ten percent of average variable range.
+	 * Stores the default search step size. Defaults to a quarter of average
+	 * variable range, for a total range of a quarter of the search size.
 	 */
-	private double InitialStep;
-	
+	private double[] InitialStep;
+	/**
+	 * Default step size fraction.
+	 */
+	private double stepSize = 0.25;
+
 	/**
 	 * Create an optimizer.
+	 * <p/>
 	 * @param dimension the number of variables.
 	 * @param iterations how precise to maximize.
 	 * @param minimums the minimum domain values.
@@ -54,51 +55,52 @@ public abstract class Optimizer {
 		this.iterations = iterations;
 		this.minimums = minimums;
 		this.maximums = maximums;
-		
-		//find average step size
-		double sum = 0;
+
+		PatternSearchStep = new double[n];
+		InitialStep = new double[n];
+
+		//find step size
 		for (int variable = 0; variable < n; variable++) {
-			sum += 0.1 * (maximums[variable] - minimums[variable]); // ten percent of the range
+			InitialStep[variable] = stepSize * (maximums[variable] - minimums[variable]); // twenty-five percent of the range
 		}
-		InitialStep = sum / n;
 	}
-	
-	
-	
+
 	/**
 	 * Maximize the fitness function output for a set of coordinates.
+	 * <p/>
 	 * @return the maximized coordinates.
 	 */
 	public double[] maximize() {
-		PatternSearchStep = InitialStep;
+		PatternSearchStep = InitialStep.clone();
 		return psOptimize(true);
 	}
-	
+
 	/**
 	 * Minimize the fitness function output for a set of coordinates.
+	 * <p/>
 	 * @return the minimized coordinates.
 	 */
 	public double[] minimize() {
-		PatternSearchStep = InitialStep;
+		PatternSearchStep = InitialStep.clone();
 		return psOptimize(false);
 	}
 
-	
 	/**
-	 * Uses a Pattern Search algorithm to find the coordinates that maximize
-	 * the function.
-	 * @param maximize whether or not to maximize or minimize. If set to
-	 * true, the method will maximize.
+	 * Uses a Pattern Search algorithm to find the coordinates that maximize the
+	 * function.
+	 * <p/>
+	 * @param maximize whether or not to maximize or minimize. If set to true,
+	 * the method will maximize.
 	 * @return the maximized coordinates.
 	 */
 	private double[] psOptimize(boolean maximize) {
 		/*
 		 * Pattern vertices.  Center is stored in 0, Left(k) is stored in k + 1,
-		 * and Right(k) is stored in k + n.
+		 * and Right(k) is stored in (k + 1) + n.
 		 */
-		Point[] vertices = new Point[2 * n + 1]; 
+		Point[] vertices = new Point[2 * n + 1];
 		int length = vertices.length;
-		
+
 		// center point placed randomly
 		double[] center = rands();
 		for (int vertex = 0; vertex < length; vertex++) {
@@ -108,57 +110,73 @@ public abstract class Optimizer {
 				vertices[vertex] = new Point(center, 0.0); // saves computation time, as these are recalculated immediately
 			}
 		}
-		
+
 		// each variable
 		for (int k = 0; k < n; k++) {
 			int leftPoint = k + 1;
 			int rightPoint = k + 1 + n;
-			vertices[leftPoint].increment(k, -PatternSearchStep);
-			vertices[rightPoint].increment(k, PatternSearchStep);	
+			vertices[leftPoint].increment(k, -PatternSearchStep[k]);
+			vertices[leftPoint].update();
+			vertices[rightPoint].increment(k, PatternSearchStep[k]);
+			vertices[rightPoint].update();
 		}
-		
+
 		for (int i = 0; i < iterations; i++) {
 			double best = vertices[0].value; // best value
-			int bestIndex = -1; // index of best value
+			int bestIndex = 0; // index of best value (currently center)
 			for (int vertex = 1; vertex < length; vertex++) {
 				if (better(vertices[vertex].value, best, maximize)) {
 					best = vertices[vertex].value;
 					bestIndex = vertex;
 				}
 			}
-			if (bestIndex == -1) { // center was best
+			if (bestIndex == 0) {
 				// scale pattern
-				PatternSearchStep /= 2; // halve search size.
 				for (int k = 0; k < n; k++) {
+					PatternSearchStep[k] /= 2; // halve search size.
 					int leftPoint = k + 1;
 					int rightPoint = k + 1 + n;
-					vertices[leftPoint].increment(k, PatternSearchStep);
-					vertices[rightPoint].increment(k, -PatternSearchStep);
+					vertices[leftPoint].increment(k, PatternSearchStep[k]); // opposite direction
+					vertices[leftPoint].update();
+					vertices[rightPoint].increment(k, -PatternSearchStep[k]); // opposite direction
+					vertices[rightPoint].update();
 				}
 			} else {
 				// move pattern
-				double[] changes = new double[n];
-				for (int k = 0; k < n; k++) {
-					changes[k] = vertices[bestIndex].coordinates[k]
-							- vertices[0].coordinates[k];
+				int variable = (bestIndex - 1) % n; // the variable to change
+				int direction = (bestIndex - 1 - n >= 0) ? 1 : -1; // which way to move
+				
+				int oppositeVertex; // find which vertex index corresponds to the opposite vertex
+				if (direction == 1) {
+					oppositeVertex = variable + 1;
+				} else {
+					oppositeVertex = variable + 1 + n;
 				}
+				
+				double change = direction * PatternSearchStep[variable]; // difference between best and center
 				for (int vertex = 0; vertex < length; vertex++) {
-					for (int k = 0; k < n; k++) {
-						vertices[vertex].increment(k, changes[k]);			
+					vertices[vertex].increment(variable, change);
+					
+					// save re-evaluation of function
+					if (vertex == 0) { 
+						vertices[vertex].setValue(vertices[bestIndex].value); 
+					} else if (vertex == oppositeVertex) {
+						vertices[vertex].setValue(vertices[0].value); 
+					} else {
+						vertices[vertex].update(); // for new values
 					}
 				}
 			}
 		}
-		
+
 		return vertices[0].coordinates;
 	}
-	
-	
-	
+
 	/**
-	 * A data point.  Used for optimization.
+	 * A data point. Used for optimization.
 	 */
 	public class Point {
+
 		/**
 		 * The data coordinates.
 		 */
@@ -167,45 +185,59 @@ public abstract class Optimizer {
 		 * The data dependent variable (output).
 		 */
 		public double value;
-		
+
 		/**
 		 * Create a point.
+		 * <p/>
 		 * @param coordinates the action coordinates.
 		 * @param value the Q-Value from the coordinates.
 		 */
-		public Point(double[] coordinates, double value)	{
+		public Point(double[] coordinates, double value) {
 			this.coordinates = coordinates;
 			this.value = value;
 		}
-		
+
 		/**
 		 * Update the {@code value} variable.
 		 */
 		public void update() {
 			this.value = f(this.coordinates);
 		}
-		
+
 		/**
-		 * Increment a coordinate by a specified amount.
+		 * Set the {@code value} variable. If the value is known, save the time
+		 * updating it.
+		 */
+		public void setValue(double value) {
+			this.value = value;
+		}
+
+		/**
+		 * Increment a coordinate by a specified amount. A call to
+		 * {@code update} is recommended afterwards.
+		 * <p/>
 		 * @param k the coordinate variable to change.
 		 * @param amount the amount to increment by.
 		 */
 		public void increment(int k, double amount) {
 			double[] newCoordinates = this.coordinates.clone();
-			newCoordinates[k] += amount;
+			double newCoordinate = newCoordinates[k] + amount;
+			if (newCoordinate > minimums[k] && newCoordinate < maximums[k]) { //in bounds
+				newCoordinates[k] = newCoordinate;
+			}
 			this.coordinates = newCoordinates.clone();
-			update();
 		}
 	}
 
 	/**
-	 * Find which double is better.
-	 * Whether or not a variable is better is determined by 
-	 * the maximize parameter.
+	 * Find which double is better. Whether or not a variable is better is
+	 * determined by the maximize parameter.
+	 * <p/>
 	 * @param a the first value to test.
 	 * @param b the second value to test.
-	 * @param maximize whether or not to test if {@code a > b}.  If false, tests for
-	 * {@code a < b}.	
+	 * @param maximize whether or not to test if {@code a > b}. If false, tests
+	 * for
+	 * {@code a < b}.
 	 * @return True if {@code a} is better than {@code b}.
 	 */
 	private boolean better(double a, double b, boolean maximize) {
@@ -215,24 +247,26 @@ public abstract class Optimizer {
 			return a < b;
 		}
 	}
-	
-	
+
 	/**
-     * Fill an array with random values.
-     * @return The array.
-     */
-    private double[] rands() {
-        double[] toReturn = new double[n];
-        for (int i = 0; i < n; i++) {
-			double range = maximums[i] - minimums[i];
-			toReturn[i] = Math.random() * range + minimums[i]; // generate random number in range
+	 * Fill an array with random values.
+	 * <p/>
+	 * @return The array.
+	 */
+	double[] rands() {
+		double[] toReturn = new double[n];
+		double rangeScale = 2 * stepSize;
+		for (int i = 0; i < n; i++) {
+			double range = (maximums[i] - minimums[i]) * rangeScale;
+			toReturn[i] = Math.random() * range
+				+ minimums[i] + range / 2; // generate random number in range
 		}
-        return toReturn;
-    }
-	
-	
+		return toReturn;
+	}
+
 	/**
 	 * Run the fitness function.
+	 * <p/>
 	 * @param input the input values (domain).
 	 * @return the result (range).
 	 */
