@@ -1,7 +1,5 @@
 package com.shsrobotics.reinforcementlearning.optimizers;
 
-import com.shsrobotics.reinforcementlearning.interfaces.Optimizer;
-
 /**
  * Optimize coordinates based on a Pattern Search algorithm. To use this class,
  * classes must extend it and provide a {@code double f(double[] input)} method.

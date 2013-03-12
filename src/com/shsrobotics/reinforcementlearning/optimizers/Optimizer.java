@@ -1,4 +1,4 @@
-package com.shsrobotics.reinforcementlearning.interfaces;
+package com.shsrobotics.reinforcementlearning.optimizers;
 
 /**
  * Optimizes a series of coordinates to either maximize or minimize a given 
