@@ -6,23 +6,26 @@ package com.shsrobotics.reinforcementlearning.interfaces;
  * <p/>
  * @author team 2412.
  */
-public abstract class Optimizer {	
+public interface Optimizer {	
 	/**
 	 * Minimize the function.
+	 * Implementations should use {@code final} keyword.
 	 * @return the minimized coordinates
 	 */
-	public abstract double[] minimize();
+	public double[] minimize();
 	
 	/**
 	 * Minimize the function.
+	 * Implementations should use {@code final} keyword.
 	 * @return the maximized coordinates.
 	 */
-	public abstract double[] maximize();
+	public double[] maximize();
 	
 	/**
 	 * The function to optimize.
+	 * Implementations should use {@code abstract} keyword.
 	 * @param input the domain (input).
 	 * @return the range (output).
 	 */
-	public abstract double f(double[] input);
+	public double f(double[] input);
 }

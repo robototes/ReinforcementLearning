@@ -11,7 +11,7 @@ import com.shsrobotics.reinforcementlearning.interfaces.Optimizer;
  * <p/>
  * @author Team 2412.
  */
-public abstract class DefaultOptimizer extends Optimizer {
+public abstract class DefaultOptimizer implements Optimizer {
 
 	/**
 	 * The number of variables to optimize. Data dimensions.
@@ -67,24 +67,14 @@ public abstract class DefaultOptimizer extends Optimizer {
 		}
 	}
 
-	/**
-	 * Maximize the fitness function output for a set of coordinates.
-	 * <p/>
-	 * @return the maximized coordinates.
-	 */
 	@Override
-	public double[] maximize() {
+	public final double[] maximize() {
 		PatternSearchStep = InitialStep.clone();
 		return psOptimize(true);
 	}
 
-	/**
-	 * Minimize the fitness function output for a set of coordinates.
-	 * <p/>
-	 * @return the minimized coordinates.
-	 */
 	@Override
-	public double[] minimize() {
+	public final double[] minimize() {
 		PatternSearchStep = InitialStep.clone();
 		return psOptimize(false);
 	}
@@ -268,12 +258,6 @@ public abstract class DefaultOptimizer extends Optimizer {
 		return toReturn;
 	}
 
-	/**
-	 * Run the fitness function.
-	 * <p/>
-	 * @param input the input values (domain).
-	 * @return the result (range).
-	 */
 	@Override
 	public abstract double f(double[] input);
 }
