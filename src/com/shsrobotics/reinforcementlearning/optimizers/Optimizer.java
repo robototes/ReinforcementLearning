@@ -258,7 +258,6 @@ public abstract class Optimizer {
 		double rangeScale = 2 * stepSize;
 		for (int i = 0; i < n; i++) {
 			double range = (maximums[i] - minimums[i]) * rangeScale;
-			int a = (int) range >> 1;
 			toReturn[i] = Math.random() * range
 				+ minimums[i] + range / 2; // generate random number in range
 		}
