@@ -7,9 +7,14 @@ public class Test extends Optimizer {
 	}
 	
 	void run() {
-		double[] best = minimize();
-		System.out.println("X: " + best[0]);
-		System.out.println("Y: " + best[1]);
+		for (int i = 0; i < 10000; i++) {
+			double[] best = minimize();
+			if (Math.abs(best[0]) > 0.0001) {
+				System.out.println("ERROR: " + best[0]);
+			} else {
+				System.out.println("WORKED: " + best[0]);
+			}
+		}
 	}
 
 	/**
