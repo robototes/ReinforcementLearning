@@ -122,10 +122,6 @@ public abstract class Optimizer {
 		}
 
 		for (int i = 0; i < iterations; i++) {
-			System.out.println("X: " + vertices[0].coordinates[0]);
-			System.out.println("Y: " + vertices[0].coordinates[1]);
-			System.out.println();
-			
 			double best = vertices[0].value; // best value
 			int bestIndex = 0; // index of best value (currently center)
 			for (int vertex = 1; vertex < length; vertex++) {
@@ -135,7 +131,6 @@ public abstract class Optimizer {
 				}
 			}
 			if (bestIndex == 0) {
-				System.out.println("Scale (new step size " + PatternSearchStep[0] / 2 + ")");
 				// scale pattern
 				for (int k = 0; k < n; k++) {
 					PatternSearchStep[k] /= 2; // halve search size.
@@ -147,7 +142,6 @@ public abstract class Optimizer {
 					vertices[rightPoint].update();
 				}
 			} else {
-				System.out.println("Move (" + best + " < " + vertices[0].value + ")");
 				// move pattern
 				int variable = (bestIndex - 1) % n; // the variable to change
 				int direction = (bestIndex - 1 - n >= 0) ? 1 : -1; // which way to move
@@ -171,8 +165,6 @@ public abstract class Optimizer {
 					} else {
 						vertices[vertex].update(); // for new values
 					}
-					
-//					vertices[vertex].update();
 				}
 			}
 		}
@@ -232,8 +224,6 @@ public abstract class Optimizer {
 			double newCoordinate = newCoordinates[k] + amount;
 			if (newCoordinate > minimums[k] && newCoordinate < maximums[k]) { //in bounds
 				newCoordinates[k] = newCoordinate;
-			} else {
-				System.out.println("Rejected variable "+ k);
 			}
 			this.coordinates = newCoordinates.clone();
 		}
