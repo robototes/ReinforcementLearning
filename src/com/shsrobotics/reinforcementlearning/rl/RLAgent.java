@@ -39,13 +39,13 @@ public abstract class RLAgent {
 	 */
 	protected final String[] stateNames;
 	/**
-	 * The number of actions.
+	 * The number of actionParameters.
 	 */
-	protected final int actions;
+	protected final int actionParameters;
 	/**
 	 * The number of state parameters.
 	 */
-	protected final int states;
+	protected final int stateParameters;
 	
 	/**
 	 * Minimum action values.
@@ -68,14 +68,9 @@ public abstract class RLAgent {
 	protected final double[] maximumStateValues;
 	
 	/**
-	 * The supervised learner to predict rewards and/or state values.
-	 */
-	protected final SupervisedLearner supervisedLearner = null;
-	
-	/**
 	 * Create an Reinforcement Learning agent.
-	 * @param actions see {@link #actionNames}
-	 * @param states see {@link #stateNames}
+	 * @param actionParameters see {@link #actionNames}
+	 * @param stateParameters see {@link #stateNames}
 	 * @param ranges map of minimum and maximum arrays. Accepted keys are:
 	 *		<ul>
 	 *			<li>{@code "Minimum Action Values"}</li>
@@ -90,11 +85,11 @@ public abstract class RLAgent {
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
 	 *		</ul>
 	 */
-	protected  RLAgent(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
+	protected RLAgent(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
 		this.actionNames = actions;
-		this.actions = actions.length;
+		this.actionParameters = actions.length;
 		this.stateNames = states;
-		this.states = states.length;
+		this.stateParameters = states.length;
 		
 		if (options.containsKey("Learning Rate")) {
 			this.learningRate = (double) options.get("Learning Rate");
@@ -124,11 +119,11 @@ public abstract class RLAgent {
 	 * Get action to take based on the current state.
 	 * @param state the environment the agent is in.
 	 * @return the best action to take.  If the agent is in the {@code kLearn}
-	 * {@link Mode}, then some actions will be random.
+	 * {@link Mode}, then some actionParameters will be random.
 	 */
 	public final Action requestAction(State state) {
 		double exploreCutoff = learningRate;        
-        double[] actionValues = new double[actions];
+        double[] actionValues = new double[actionParameters];
         
         if (currentMode.chooseBestOption) { // check modes
 			exploreCutoff = 0.0;
@@ -150,7 +145,7 @@ public abstract class RLAgent {
 	 * @param state the current {@link State}.
 	 * @return correct {@link Action}.
 	 */
-	protected abstract double[] query(State state);
+	abstract double[] query(State state);
 	
 	/**
 	 * Update the supervised learner with a new data point.
@@ -159,7 +154,7 @@ public abstract class RLAgent {
 	 * @param newState the resultant state.
 	 * @param reward the reward received.
 	 */
-	protected abstract void updateSupervisedLearner(State state, Action action, State newState, double reward);
+	public abstract void updateSupervisedLearner(State state, Action action, State newState, double reward);
 	
 	/**
 	 * Set the learner mode.
@@ -230,10 +225,10 @@ public abstract class RLAgent {
 		 */
 		public Action(String[] keys, double[] values) {
 			super(keys, values, false);
-			if (keys.length != actions) {
+			if (keys.length != actionParameters) {
 				throw new Error("Incorrect key length");
 			}
-			if (values.length != actions) {
+			if (values.length != actionParameters) {
 				throw new Error("Incorrect value length");
 			}
 		}
@@ -266,10 +261,10 @@ public abstract class RLAgent {
 		 */
 		public State(String[] keys, double[] values) {
 			super(keys, values, true);
-			if (keys.length != actions) {
+			if (keys.length != actionParameters) {
 				throw new Error("Incorrect key length");
 			}
-			if (values.length != actions) {
+			if (values.length != actionParameters) {
 				throw new Error("Incorrect value length");
 			}
 		}
@@ -297,8 +292,8 @@ public abstract class RLAgent {
      * @return The array.
      */
     protected double[] rands() {
-        double[] toReturn = new double[this.actions];
-        for (int i = 0; i < this.actions; i++) {
+        double[] toReturn = new double[this.actionParameters];
+        for (int i = 0; i < this.actionParameters; i++) {
                 double range = maximumActionValues[i] - minimumActionValues[i];
                 toReturn[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
         }
