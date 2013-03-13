@@ -169,17 +169,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 	/**
 	 * A data point. Used for optimization.
 	 */
-	public class Point extends DataPoint{
-
-		/**
-		 * The data coordinates.
-		 */
-		public double[] coordinates;
-		/**
-		 * The data dependent variable (output).
-		 */
-		public double value;
-
+	public class Point extends DataPoint {
 		/**
 		 * Create a point.
 		 * <p/>
@@ -187,17 +177,28 @@ public abstract class DefaultOptimizer implements Optimizer {
 		 * @param value the Q-Value from the coordinates.
 		 */
 		public Point(double[] coordinates, double value) {			
-			super(null, coordinates, null, value);
-			this.coordinates = coordinates;
-			this.value = value;
-			double[] output = {value};
+			super(coordinates, value);
+		}
+		
+		/**
+		 * The data coordinates.
+		 */
+		public double[] coordinates() {
+			return super.getInputs();
+		}
+		
+		/**
+		 * The data dependent variable (output).
+		 */
+		public double value() {
+			return super.getOutputs()[0];
 		}
 
 		/**
 		 * Update the {@code value} variable.
 		 */
 		public void update() {
-			this.value = f(this.coordinates);
+			super.set("", stepSize) = f(this.coordinates);
 		}
 
 		/**
