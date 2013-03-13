@@ -1,1 +1,4 @@
 com.shsrobotics.reinforcementlearning.optimizers
+com.shsrobotics.reinforcementlearning.rl
+com.shsrobotics.reinforcementlearning.supervisedlearners
+com.shsrobotics.reinforcementlearning.util
