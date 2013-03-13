@@ -42,7 +42,29 @@ public class DataPoint {
 		this.outputKeys = outputKeys;
 		this.output = output;
 	}
-
+	
+	/**
+	 * A set of variables.
+	 * <p/>
+	 * @param keys the input keys.
+	 * @param values  the input values.
+	 * @param isInput true if is an input point, false if is an output point.
+	 */
+	public DataPoint(String[] keys, double[] values, boolean isInput) {
+		if (isInput) {
+			this.inputKeys = keys;
+			this.input = values;
+			this.outputKeys = null;
+			this.output = null;
+		} else {
+			this.inputKeys = null;
+			this.input = null;
+			this.outputKeys = keys;
+			this.output = values;
+		}
+	}
+	
+	
 	/**
 	 * Get the input value associated with a key
 	 * <p/>
