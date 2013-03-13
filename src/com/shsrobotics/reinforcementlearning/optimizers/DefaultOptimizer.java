@@ -1,5 +1,7 @@
 package com.shsrobotics.reinforcementlearning.optimizers;
 
+import com.shsrobotics.reinforcementlearning.util.DataPoint;
+
 /**
  * Optimize coordinates based on a Pattern Search algorithm. To use this class,
  * classes must extend it and provide a {@code double f(double[] input)} method.
@@ -167,7 +169,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 	/**
 	 * A data point. Used for optimization.
 	 */
-	public class Point {
+	public class Point extends DataPoint{
 
 		/**
 		 * The data coordinates.
@@ -184,9 +186,11 @@ public abstract class DefaultOptimizer implements Optimizer {
 		 * @param coordinates the action coordinates.
 		 * @param value the Q-Value from the coordinates.
 		 */
-		public Point(double[] coordinates, double value) {
+		public Point(double[] coordinates, double value) {			
+			super(null, coordinates, null, value);
 			this.coordinates = coordinates;
 			this.value = value;
+			double[] output = {value};
 		}
 
 		/**
