@@ -113,6 +113,26 @@ public class DataPoint {
 	public void set(String key, double value) {
 		input[indexOf(key)] = value;
 	}
+	
+	/**
+	 * Set a key-value pair.
+	 * <p/>
+	 * @param index the index of a key.
+	 * @param value the value to set the key to.
+	 */
+	public void setOutput(int index, double value) {
+		this.output[index] = value;
+	}
+	
+	/**
+	 * Set a key-value pair.
+	 * <p/>
+	 * @param index the index of a key.
+	 * @param value the value to set the key to.
+	 */
+	public void setInput(int index, double value) {
+		this.input[index] = value;
+	}
 
 	/**
 	 * Get all of the input keys.
