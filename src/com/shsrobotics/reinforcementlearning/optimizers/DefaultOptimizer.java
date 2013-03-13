@@ -116,11 +116,11 @@ public abstract class DefaultOptimizer implements Optimizer {
 		}
 
 		for (int i = 0; i < iterations; i++) {
-			double best = vertices[0].value; // best value
+			double best = vertices[0].value(); // best value
 			int bestIndex = 0; // index of best value (currently center)
 			for (int vertex = 1; vertex < length; vertex++) {
-				if (better(vertices[vertex].value, best, maximize)) {
-					best = vertices[vertex].value;
+				if (better(vertices[vertex].value(), best, maximize)) {
+					best = vertices[vertex].value();
 					bestIndex = vertex;
 				}
 			}
@@ -153,9 +153,9 @@ public abstract class DefaultOptimizer implements Optimizer {
 					
 					// save re-evaluation of function
 					if (vertex == 0) { 
-						vertices[vertex].setValue(vertices[bestIndex].value); 
+						vertices[vertex].setValue(vertices[bestIndex].value()); 
 					} else if (vertex == oppositeVertex) {
-						vertices[vertex].setValue(vertices[0].value); 
+						vertices[vertex].setValue(vertices[0].value()); 
 					} else {
 						vertices[vertex].update(); // for new values
 					}
@@ -163,7 +163,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 			}
 		}
 
-		return vertices[0].coordinates;
+		return vertices[0].coordinates();
 	}
 
 	/**
@@ -198,7 +198,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 		 * Update the {@code value} variable.
 		 */
 		public void update() {
-			super.set("", stepSize) = f(this.coordinates);
+			super.setOutput(0, f(super.getInputs()));
 		}
 
 		/**
@@ -206,7 +206,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 		 * updating it.
 		 */
 		public void setValue(double value) {
-			this.value = value;
+			super.setOutput(0, value);
 		}
 
 		/**
@@ -217,12 +217,11 @@ public abstract class DefaultOptimizer implements Optimizer {
 		 * @param amount the amount to increment by.
 		 */
 		public void increment(int k, double amount) {
-			double[] newCoordinates = this.coordinates.clone();
+			double[] newCoordinates = super.getInputs();
 			double newCoordinate = newCoordinates[k] + amount;
-			if (newCoordinate > minimums[k] && newCoordinate < maximums[k]) { //in bounds
-				newCoordinates[k] = newCoordinate;
+			if (newCoordinate > minimums[k] && newCoordinate < maximums[k]) { //in bounds				
+				setInput(k, newCoordinate);
 			}
-			this.coordinates = newCoordinates.clone();
 		}
 	}
 
