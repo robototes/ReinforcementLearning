@@ -217,7 +217,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 		 * @param amount the amount to increment by.
 		 */
 		public void increment(int k, double amount) {
-			double[] newCoordinates = super.getInputs();
+			double[] newCoordinates = super.getInputs().clone();
 			double newCoordinate = newCoordinates[k] + amount;
 			if (newCoordinate > minimums[k] && newCoordinate < maximums[k]) { //in bounds				
 				setInput(k, newCoordinate);

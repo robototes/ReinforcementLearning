@@ -110,8 +110,10 @@ public class DataPoint {
 	 * @param key the key.
 	 * @param value the value to set the key to.
 	 */
-	public void set(String key, double value) {
-		input[indexOf(key)] = value;
+	public void setInput(String key, double value) {
+		double[] newInput = input.clone();
+		newInput[indexOf(key)] = value;
+		input = newInput.clone();
 	}
 	
 	/**
@@ -121,7 +123,9 @@ public class DataPoint {
 	 * @param value the value to set the key to.
 	 */
 	public void setOutput(int index, double value) {
-		this.output[index] = value;
+		double[] newOutput = input.clone();
+		newOutput[index] = value;
+		output = newOutput.clone();
 	}
 	
 	/**
@@ -131,7 +135,9 @@ public class DataPoint {
 	 * @param value the value to set the key to.
 	 */
 	public void setInput(int index, double value) {
-		this.input[index] = value;
+		double[] newInput = input.clone();
+		newInput[index] = value;
+		input = newInput.clone();
 	}
 
 	/**
