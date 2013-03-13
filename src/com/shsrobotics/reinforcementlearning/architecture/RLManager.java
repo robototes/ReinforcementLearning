@@ -1,9 +1,5 @@
 package com.shsrobotics.reinforcementlearning.architecture;
 
-/**
- *
- * @author Max
- */
 public abstract class RLManager {
 	
 	public abstract void start();
