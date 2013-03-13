@@ -47,7 +47,6 @@ public abstract class DefaultOptimizer implements Optimizer {
 	/**
 	 * Create an optimizer.
 	 * <p/>
-	 * @param dimension the number of variables.
 	 * @param iterations how precise to maximize.
 	 * @param minimums the minimum domain values.
 	 * @param maximums the maximum domain values.
@@ -182,6 +181,8 @@ public abstract class DefaultOptimizer implements Optimizer {
 		
 		/**
 		 * The data coordinates.
+		 * 
+		 * @return the coordinates
 		 */
 		public double[] coordinates() {
 			return super.getInputs();
@@ -189,6 +190,8 @@ public abstract class DefaultOptimizer implements Optimizer {
 		
 		/**
 		 * The data dependent variable (output).
+		 * 
+		 * @return the value
 		 */
 		public double value() {
 			return super.getOutputs()[0];
@@ -204,6 +207,8 @@ public abstract class DefaultOptimizer implements Optimizer {
 		/**
 		 * Set the {@code value} variable. If the value is known, save the time
 		 * updating it.
+		 * 
+		 * @param value the new value
 		 */
 		public void setValue(double value) {
 			super.setOutput(0, value);
@@ -249,7 +254,7 @@ public abstract class DefaultOptimizer implements Optimizer {
 	 * <p/>
 	 * @return The array.
 	 */
-	double[] rands() {
+	private double[] rands() {
 		double[] toReturn = new double[n];
 		double rangeScale = 2 * stepSize;
 		for (int i = 0; i < n; i++) {
