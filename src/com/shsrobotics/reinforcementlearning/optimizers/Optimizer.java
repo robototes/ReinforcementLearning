@@ -4,7 +4,7 @@ package com.shsrobotics.reinforcementlearning.optimizers;
  * Optimizes a series of coordinates to either maximize or minimize a given 
  * function.
  * <p/>
- * @author team 2412.
+ * @author Team 2412.
  */
 public interface Optimizer {	
 	/**

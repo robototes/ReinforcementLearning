@@ -12,7 +12,7 @@ public abstract class RLAgent {
 	/**
 	 * Mode the learner is operating in.
 	 */
-	private Mode currentMode = Mode.kOff;
+	protected Mode currentMode = Mode.kOff;
 	
 	/**
 	 * Learning rate of the learner.
@@ -23,54 +23,54 @@ public abstract class RLAgent {
 	 * Discount factor of the learner. A higher discount factor places more
 	 * value on short-term rewards.
 	 */
-	double discountFactor;
+	protected double discountFactor;
 	
 	/**
 	 * Learner accuracy.
 	 */
-	double accuracy;
+	protected double accuracy;
 	
 	/**
 	 * List of action parameter names.
 	 */
-	final String[] actionNames;
+	protected final String[] actionNames;
 	/**
 	 * List of state parameter names.
 	 */
-	final String[] stateNames;
+	protected final String[] stateNames;
 	/**
 	 * The number of actions.
 	 */
-	final int actions;
+	protected final int actions;
 	/**
 	 * The number of state parameters.
 	 */
-	final int states;
+	protected final int states;
 	
 	/**
 	 * Minimum action values.
 	 */
-	final double[] minimumActionValues;
+	protected final double[] minimumActionValues;
 	
 	/**
 	 * Maximum action values.
 	 */
-	final double[] maximumActionValues;
+	protected final double[] maximumActionValues;
 	
 	/**
 	 * Minimum state values.
 	 */
-	final double[] minimumStateValues;
+	protected final double[] minimumStateValues;
 	
 	/**
 	 * Maximum state values.
 	 */
-	final double[] maximumStateValues;
+	protected final double[] maximumStateValues;
 	
 	/**
 	 * The supervised learner to predict rewards and/or state values.
 	 */
-	final SupervisedLearner supervisedLearner = null;
+	protected final SupervisedLearner supervisedLearner = null;
 	
 	/**
 	 * Create an Reinforcement Learning agent.
@@ -90,7 +90,7 @@ public abstract class RLAgent {
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
 	 *		</ul>
 	 */
-	public RLAgent(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
+	protected  RLAgent(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
 		this.actionNames = actions;
 		this.actions = actions.length;
 		this.stateNames = states;
@@ -126,7 +126,7 @@ public abstract class RLAgent {
 	 * @return the best action to take.  If the agent is in the {@code kLearn}
 	 * {@link Mode}, then some actions will be random.
 	 */
-	public Action requestAction(State state) {
+	public final Action requestAction(State state) {
 		double exploreCutoff = learningRate;        
         double[] actionValues = new double[actions];
         
@@ -150,7 +150,7 @@ public abstract class RLAgent {
 	 * @param state the current {@link State}.
 	 * @return correct {@link Action}.
 	 */
-	abstract double[] query(State state);
+	protected abstract double[] query(State state);
 	
 	/**
 	 * Update the supervised learner with a new data point.
@@ -159,7 +159,7 @@ public abstract class RLAgent {
 	 * @param newState the resultant state.
 	 * @param reward the reward received.
 	 */
-	abstract void updateSupervisedLearner(State state, Action action, State newState, double reward);
+	protected abstract void updateSupervisedLearner(State state, Action action, State newState, double reward);
 	
 	/**
 	 * Set the learner mode.
@@ -296,7 +296,7 @@ public abstract class RLAgent {
      * Fill an array with random action values
      * @return The array.
      */
-    double[] rands() {
+    protected double[] rands() {
         double[] toReturn = new double[this.actions];
         for (int i = 0; i < this.actions; i++) {
                 double range = maximumActionValues[i] - minimumActionValues[i];
