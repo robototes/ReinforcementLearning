@@ -1,5 +1,6 @@
 package com.shsrobotics.reinforcementlearning.rl;
 
+import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Map;
 
@@ -12,37 +13,59 @@ public abstract class RLAgent {
 	/**
 	 * Learning rate of the learner.
 	 */
-	private double learningRate;
+	double learningRate;
 	
 	/**
 	 * Discount factor of the learner. A higher discount factor places more
 	 * value on short-term rewards.
 	 */
-	private double discountFactor;
+	double discountFactor;
 	
 	/**
 	 * Learner accuracy.
 	 */
-	private double accuracy;
+	double accuracy;
 	
 	/**
 	 * List of action parameter names.
 	 */
-	private final String[] actionNames;
+	final String[] actionNames;
 	/**
 	 * List of state parameter names.
 	 */
-	private final String[] stateNames;
+	final String[] stateNames;
 	/**
 	 * The number of actions.
 	 */
-	private final int actions;
+	final int actions;
 	/**
 	 * The number of state parameters.
 	 */
-	private final int states;
+	final int states;
 	
-	public RLAgent(String[] actions, String[] states, Map<String, Number> options) {
+	/**
+	 * Minimum action values.
+	 */
+	final double[] minimumActionValues;
+	
+	/**
+	 * Maximum action values.
+	 */
+	final double[] maximumActionValues;
+	
+	/**
+	 * Minimum state values.
+	 */
+	final double[] minimumStateValues;
+	
+	/**
+	 * Maximum state values.
+	 */
+	final double[] maximumStateValues;
+	
+	final SupervisedLearner supervisedLearner = null;
+	
+	public RLAgent(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
 		this.actionNames = actions;
 		this.actions = actions.length;
 		this.stateNames = states;
@@ -65,11 +88,47 @@ public abstract class RLAgent {
 		} else {
 			this.accuracy = 0.9; // default
 		}
+		
+		minimumActionValues = ranges.get("Minimum Action Values");
+		maximumActionValues = ranges.get("Maximum Action Values");
+		minimumStateValues = ranges.get("Minimum State Values");
+		maximumStateValues = ranges.get("Maximum State Values");
 	}
 	
-	public void requestAction() {
-		
+	public Action requestAction(State state) {
+		double exploreCutoff = learningRate;        
+        double[] actionValues = new double[actions];
+        
+        if (currentMode.chooseBestOption) { // check modes
+			exploreCutoff = 0.0;
+		}
+        if (!currentMode.allowActionRequests) {
+            throw new Error("Wrong learning mode.");
+        }
+        
+        if (Math.random() < exploreCutoff) { // choose random values
+            actionValues = rands();
+        } else {
+			actionValues = query(state);
+		}
+		return new Action(actionNames, actionValues);
 	}
+	
+	/**
+	 * Return the correct action for the given state.
+	 * @param state the current state.
+	 * @return array of raw action values.
+	 */
+	abstract double[] query(State state);
+	
+	/**
+	 * Update the supervised learner with a new data point.
+	 * @param state the state the agent was in.
+	 * @param action the action preformed.
+	 * @param newState the resultant state.
+	 * @param reward the reward received.
+	 */
+	abstract void updateSupervisedLearner(State state, Action action, State newState, double reward);
 	
 	/**
 	 * Set the learner mode.
@@ -114,9 +173,89 @@ public abstract class RLAgent {
         }
     }
 	
+	/**
+	 * Set of action parameters.
+	 */
 	public class Action extends DataPoint {
+		/**
+		 * Create an action.
+		 * @param keys keys to represent action parameters.
+		 * @param values values for each parameter.
+		 */
 		public Action(String[] keys, double[] values) {
 			super(keys, values, false);
+			if (keys.length != actions) {
+				throw new Error("Incorrect key length");
+			}
+			if (values.length != actions) {
+				throw new Error("Incorrect value length");
+			}
+		}
+		/**
+		 * Get the value for a parameter.
+		 * @param key the parameter name.
+		 * @return the value.
+		 */
+		public double getActionParameter(String key) {
+			return getOutput(key);
+		}
+		
+		/**
+		 * Get all of the parameters.
+		 * @return raw parameter values.
+		 */
+		public double[] get() {
+			return getOutputs();
 		}
 	}
+	
+	/**
+	 * Set of state parameters.
+	 */
+	public class State extends DataPoint {
+		/**
+		 * Create a state.
+		 * @param keys keys to represent state parameters.
+		 * @param values values for each parameter.
+		 */
+		public State(String[] keys, double[] values) {
+			super(keys, values, true);
+			if (keys.length != actions) {
+				throw new Error("Incorrect key length");
+			}
+			if (values.length != actions) {
+				throw new Error("Incorrect value length");
+			}
+		}
+		
+		/**
+		 * Get the value for a parameter.
+		 * @param key the parameter name.
+		 * @return the value.
+		 */
+		public double getStateParameter(String key) {
+			return getInput(key);
+		}
+		
+		/**
+		 * Get all of the parameters.
+		 * @return raw parameter values.
+		 */
+		public double[] get() {
+			return getInputs();
+		}
+	}
+	
+	/**
+     * Fill an array with random action values
+     * @return The array.
+     */
+    double[] rands() {
+        double[] toReturn = new double[this.actions];
+        for (int i = 0; i < this.actions; i++) {
+                double range = maximumActionValues[i] - minimumActionValues[i];
+                toReturn[i] = Math.random() * range + minimumActionValues[i]; // generate random number in range
+        }
+        return toReturn;
+    }
 }
