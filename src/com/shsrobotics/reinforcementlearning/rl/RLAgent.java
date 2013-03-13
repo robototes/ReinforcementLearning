@@ -1,5 +1,6 @@
 package com.shsrobotics.reinforcementlearning.rl;
 
+import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Map;
 
 public abstract class RLAgent {
@@ -112,4 +113,10 @@ public abstract class RLAgent {
 			this.enabled = enabled;
         }
     }
+	
+	public class Action extends DataPoint {
+		public Action(String[] keys, double[] values) {
+			super(keys, values, false);
+		}
+	}
 }
