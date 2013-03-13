@@ -46,6 +46,25 @@ public class DataPoint {
 	/**
 	 * A set of variables.
 	 * <p/>
+	 * @param input the input values.
+	 * @param output the output value.
+	 */
+	public DataPoint(double[] input, double output) {
+		String[] inputKeys = new String[input.length];
+		String[] outputKeys = {"Output"};
+		double[] outputArray = {output};
+		for (int i = 0; i < input.length; i++) {
+			inputKeys[i] = String.valueOf(i);
+		}
+		this.inputKeys = inputKeys;
+		this.input = input;
+		this.outputKeys = outputKeys;
+		this.output = outputArray;
+	}
+	
+	/**
+	 * A set of variables.
+	 * <p/>
 	 * @param keys the input keys.
 	 * @param values  the input values.
 	 * @param isInput true if is an input point, false if is an output point.
