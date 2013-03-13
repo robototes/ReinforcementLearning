@@ -7,6 +7,7 @@ package com.shsrobotics.reinforcementlearning.interfaces;
  * 
  * @author Max
  */
-public abstract class Predictor {
-	public abstract DataSet querry();
+public abstract class Predictor<Q extends DataSet> {
+	public abstract Q querry(Q querry);
+	public abstract void train(Q data);
 }
