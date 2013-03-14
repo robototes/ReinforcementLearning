@@ -1,6 +1,5 @@
 package com.shsrobotics.reinforcementlearning.rl;
 
-import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Map;
 

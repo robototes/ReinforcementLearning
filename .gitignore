@@ -7,3 +7,4 @@ j2meclasses/*
 *.class
 *.tmp
 /dist/
+/images/

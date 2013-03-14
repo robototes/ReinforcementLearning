@@ -2,6 +2,7 @@ package com.shsrobotics.reinforcementlearning.rl;
 
 import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.TestLearner;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -24,6 +25,7 @@ public class ModelBasedLearner extends RLAgent {
 	 */
 	protected SupervisedLearner[] supervisedLearner;
 	
+	
 	/**
 	 * Create a Model-Based Reinforcement Learning agent.
 	 * @param actionParameters see {@link #actionNames}
@@ -42,7 +44,7 @@ public class ModelBasedLearner extends RLAgent {
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
 	 *		</ul>
 	 */
-	public ModelBasedLearner(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
+	public ModelBasedLearner(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) throws Exception {
 		super(actions, states, ranges, options);
 		
 		rewardModel = stateParameters;
@@ -67,16 +69,18 @@ public class ModelBasedLearner extends RLAgent {
 	 * @return array. Last index is the reward, all others represent predicted
 	 * parameter values of the new state.
 	 */
-	double[] queryModel(State state, Action action) {
-		double[] predictedValues = new double[stateParameters + 1];
+	Map<State, Double> queryModel(State state, Action action) {
+		double[] predictedValues = new double[stateParameters];
 		double[] stateValues = state.get();
 		double[] input = join(stateValues, action.get());
 		for (int parameter = 0; parameter < stateParameters; parameter++) {
 			predictedValues[parameter] = stateValues[parameter] + supervisedLearner[parameter].query(input);
 		}
-		predictedValues[rewardModel] = supervisedLearner[rewardModel].query(input);
+		double reward = supervisedLearner[rewardModel].query(input);
 		
-		return predictedValues;
+		Map<State, Double> toReturn = new HashMap();
+		toReturn.put(new State(stateNames, predictedValues), reward);
+		return toReturn;
 	}
 
 	@Override
@@ -98,10 +102,10 @@ public class ModelBasedLearner extends RLAgent {
 	}
 	
 	/**
-	 * Join two arrays
-	 * @param a
-	 * @param b
-	 * @return the joined array.
+	 * Join two arrays.
+	 * @param a first array.
+	 * @param b second array.
+	 * @return the joined array, with {@code a} before {@code b}.
 	 */
 	private double[] join(double[] a, double[] b) {
 		int length = a.length + b.length;
