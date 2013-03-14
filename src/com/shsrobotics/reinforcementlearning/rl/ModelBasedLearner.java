@@ -11,7 +11,7 @@ import java.util.Map;
  * Hester, Todd, and Peter Stone. <i>Real Time Targeted Exploration in 
  * Large Domains. Department of Computer Science</i>. University of Texas, 
  * Aug. 2010. Web. 13 Mar. 2013. 
- * <a href="http://www.cs.utexas.edu/~pstone/Papers/bib2html-links/ICDL10-hester.pdf">&lt;http://www.cs.utexas.edu/~pstone/Papers/bib2html-links/ICDL10-hester.pdf&gt;</a>.
+ * <a href="http://www.cs.utexas.edu/users/ai-lab/pubs/todd-thesis.pdf">&lt;http://www.cs.utexas.edu/users/ai-lab/pubs/todd-thesis.pdf&gt;</a>.
  */
 public class ModelBasedLearner extends RLAgent {
 
