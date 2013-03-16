@@ -76,7 +76,7 @@ public class ModelBasedLearner extends RLAgent {
 	 *			<li>{@code "Maximum Action Values"}</li>
 	 *			<li>{@code "Minimum State Values"}</li>
 	 *			<li>{@code "Maximum State Values"}</li>
-	 *			<li>{@code "Maximum Reward."}  The value should be in index 0.</li>
+	 *			<li>{@code "Maximum Reward"}<br />  The value should be at index 0.</li>
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
