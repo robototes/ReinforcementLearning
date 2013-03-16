@@ -3,9 +3,6 @@ package com.shsrobotics.reinforcementlearning.rl;
 import com.shsrobotics.reinforcementlearning.optimizers.DefaultOptimizer;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.TestLearner;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
