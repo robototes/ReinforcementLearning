@@ -312,25 +312,6 @@ public class ModelBasedLearner extends RLAgent {
 			}
 			return values;
 		}
-
-		/**
-		 * Join two arrays.
-		 * @param a first array.
-		 * @param b second array.
-		 * @return the joined array, with {@code a} before {@code b}.
-		 */
-		private double[] join(double[] a, double[] b) {
-			int length = a.length + b.length;
-			double[] toReturn = new double[length];
-			for (int i = 0; i < length; i++) {
-				if (i > a.length - 1) {
-					toReturn[i] = b[i - a.length];
-				} else {
-					toReturn[i] = a[i];
-				}
-			}
-			return toReturn;
-		}
 	}
 
 }
