@@ -14,15 +14,20 @@ public abstract class RLAgent {
 	protected Mode currentMode = Mode.kOff;
 	
 	/**
-	 * Learning rate of the learner.
+	 * Exploration rate of the learner.
 	 */
-	private double learningRate;
+	private double explorationRate;
 	
 	/**
 	 * Discount factor of the learner. A higher discount factor places more
 	 * value on short-term rewards.
 	 */
 	protected double discountFactor;
+	
+	/**
+	 * Learning rate of the learner.
+	 */
+	protected double learningRate;
 	
 	/**
 	 * Learner accuracy.
@@ -79,6 +84,7 @@ public abstract class RLAgent {
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
+	 *			<li>{@code "Exploration Rate"} -- {@link #explorationRate}</li>
 	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
@@ -89,6 +95,12 @@ public abstract class RLAgent {
 		this.actionParameters = actions.length;
 		this.stateNames = states;
 		this.stateParameters = states.length;
+		
+		if (options.containsKey("Exploration Rate")) {
+			this.explorationRate = (double) options.get("Exploration Rate");
+		} else {
+			this.explorationRate = 0.1; // default
+		}
 		
 		if (options.containsKey("Learning Rate")) {
 			this.learningRate = (double) options.get("Learning Rate");
@@ -121,7 +133,7 @@ public abstract class RLAgent {
 	 * {@link Mode}, then some actionParameters will be random.
 	 */
 	public final Action requestAction(State state) {
-		double exploreCutoff = learningRate;        
+		double exploreCutoff = explorationRate;        
         double[] actionValues = new double[actionParameters];
         
         if (currentMode.chooseBestOption) { // check modes

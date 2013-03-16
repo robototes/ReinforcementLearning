@@ -1,7 +1,10 @@
 package com.shsrobotics.reinforcementlearning.rl;
 
+import com.shsrobotics.reinforcementlearning.optimizers.DefaultOptimizer;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.TestLearner;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,9 +24,46 @@ public class ModelBasedLearner extends RLAgent {
 	private int rewardModel;
 	
 	/**
+	 * The maximum reward possible.
+	 */
+	private double maxReward;
+	
+	/**
+	 * Q-Values for each state-action pair.
+	 */
+	private Map<double[], Double> Q;
+	/**
+	 * Visit counts for each discretized state-action pair.
+	 */
+	private Map<double[], Integer> s_a_Counts;
+	/**
+	 * Visit counts for each discretized state.
+	 */
+	private Map<State, Integer> s_Counts;
+	/**
+	 * Maximum UCT Search depth.
+	 */
+	private int maxDepth = 4;
+	
+	/**
+	 * Number of discrete values for each feature.
+	 */
+	private int numberOfBins = 3000;
+	/**
+	 * Array of minimum step sizes for each feature, calculated 
+	 * from {@link #numberOfBins}.
+	 */
+	private double[] stepSizes;
+	
+	/**
 	 * The supervised learner to predict rewards and/or state values.
 	 */
 	protected SupervisedLearner[] supervisedLearner;
+	
+	/**
+	 * Finds the best action to maximize Q-Values.
+	 */
+	private QMaximizer qMaximizer;
 	
 	
 	/**
@@ -36,30 +76,69 @@ public class ModelBasedLearner extends RLAgent {
 	 *			<li>{@code "Maximum Action Values"}</li>
 	 *			<li>{@code "Minimum State Values"}</li>
 	 *			<li>{@code "Maximum State Values"}</li>
+	 *			<li>{@code "Maximum Reward."}  The value should be in index 0.</li>
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
+	 *			<li>{@code "Exploration Rate"} -- {@link #explorationRate}</li>
 	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
 	 *		</ul>
 	 */
-	public ModelBasedLearner(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) throws Exception {
+	public ModelBasedLearner(String[] actions, String[] states, Map<String, double[]> ranges, Map<String, Number> options) {
 		super(actions, states, ranges, options);
 		
 		rewardModel = stateParameters;
+		
+		qMaximizer = new QMaximizer();
+		
+		maxReward = ranges.get("Maximum Reward")[0];
 		
 		double[] minimums = join(minimumStateValues, minimumActionValues);
 		double[] maximums = join(maximumStateValues, maximumActionValues);
 		supervisedLearner = new TestLearner[stateParameters + 1]; // placeholder
 		for (int i = 0; i <= stateParameters; i++) { // fill array of learners
 			supervisedLearner[i] = new TestLearner(minimums, maximums);
+			stepSizes[i] = (maximumStateValues[i] - minimumStateValues[i]) / numberOfBins;
 		}
 	}
 	
 	@Override
 	double[] query(State state) {
-		return null;
+		State discretized = discretize(state);
+		qMaximizer.setMode(1);
+		qMaximizer.setState(discretized);
+		return qMaximizer.maximize();
+	}
+	
+	/**
+	 * Preform a UCT-Search of the model to find the best action to take.
+	 * @param state the current {@link RLAgent.State}.
+	 * @param depth the current search depth.
+	 * @return the correct {@link RLAgent.Action}.
+	 */
+	double UCTSearch(State state, int depth) {
+		if (depth == maxDepth) {
+			return 0;
+		}
+		State discretized = discretize(state); //discretize state		
+		//update Q maximizer
+		qMaximizer.setMode(0);
+		qMaximizer.setState(discretized);
+		
+		Action bestAction = new Action(actionNames, qMaximizer.maximize()); // find best action		
+		Prediction prediction = queryModel(discretized, bestAction); // predict new state and reward 		
+		double sampleReturn = prediction.reward + learningRate * UCTSearch(prediction.state, depth++); // recursive search
+		//update counts
+		double[] stateAction = join(discretized.get(), bestAction.get());
+		s_Counts.put(discretized, s_Counts.get(discretized) + 1);
+		s_a_Counts.put(stateAction, s_Counts.get(discretized) + 1);
+		//update Q
+		qMaximizer.setMode(1);
+		double newQ = discountFactor * sampleReturn + (1 - discountFactor) * qMaximizer.f(qMaximizer.maximize());
+		Q.put(stateAction, newQ);
+		return 0;
 	}
 	
 	/**
@@ -69,7 +148,7 @@ public class ModelBasedLearner extends RLAgent {
 	 * @return array. Last index is the reward, all others represent predicted
 	 * parameter values of the new state.
 	 */
-	Map<State, Double> queryModel(State state, Action action) {
+	Prediction queryModel(State state, Action action) {
 		double[] predictedValues = new double[stateParameters];
 		double[] stateValues = state.get();
 		double[] input = join(stateValues, action.get());
@@ -78,9 +157,7 @@ public class ModelBasedLearner extends RLAgent {
 		}
 		double reward = supervisedLearner[rewardModel].query(input);
 		
-		Map<State, Double> toReturn = new HashMap();
-		toReturn.put(new State(stateNames, predictedValues), reward);
-		return toReturn;
+		return new Prediction(new State(stateNames, predictedValues), reward);
 	}
 
 	@Override
@@ -119,4 +196,144 @@ public class ModelBasedLearner extends RLAgent {
 		}
 		return toReturn;
 	}	
+
+	/**
+	 * Discretize a state into {@link #numberOfBins} parts.
+	 * @param action the state.
+	 * @return the discretized state.
+	 */
+	private State discretize(State state) {
+		double[] values = state.get();
+		for (int i = 0; i < stateParameters; i++) {
+			int  count = (int ) (values[i] / stepSizes[i]);
+			values[i] = count * stepSizes[i];
+		}
+		return new State(stateNames, values);
+	}
+	
+	/**
+	 * A model prediction.
+	 */
+	private class Prediction {
+		/**
+		 * The state prediction.
+		 */
+		public State state;
+		/**
+		 * The reward prediction.
+		 */
+		public double reward;
+		
+		/**
+		 * Create a prediction instance.
+		 * @param state the predicted state.
+		 * @param reward the predicted reward.
+		 */
+		public Prediction(State state, double reward) {
+			this.state = state;
+			this.reward = reward;
+		}
+	}
+
+	/**
+	 * Maximize Q-Values by finding the best action.
+	 */
+	public class QMaximizer extends DefaultOptimizer {
+
+		private State environment;
+
+		/**
+		 * The number of action parameters.
+		 */
+		private int actionParameters;
+
+		/**
+		 * Saves the best action so far.
+		 */
+		private double[] bestAction;
+
+		/**
+		 * Mode of the {@link QMaximizer}.
+		 */
+		private int currentMode;
+
+		/**
+		 * Create a {@link QMaximizer}.
+		 * @param minimums the minimum action values.
+		 * @param maximums the maximum action values.
+		 */
+		public QMaximizer () {
+			super(16, minimumActionValues, minimumStateValues);
+
+			actionParameters = minimums.length;
+			for (int i = 0; i <= actionParameters; i++) { // calculate step sizes
+				stepSizes[i] = (maximums[i] - minimums[i]) / numberOfBins;
+			}
+		}
+
+		/**
+		 * Set the state to use for maximization.
+		 * @param state the discretized state.
+		 */
+		public void setState(State state) {
+			this.environment = state;
+		}
+		
+		/**
+		 * Set the mode of the Q-Maximizer.
+		 * @param mode the mode. {@code 0} for UCT-Search maximization, {@code 1} for Action maximization alone.
+		 */
+		public void setMode(int mode) {
+			this.currentMode = mode;
+		}
+
+		@Override
+		public double f(double[] input) { // input is action values
+			double[] discretizedAction = discretize(input);
+			double[] discretizedState = environment.get();
+			double[] qInput = join(discretizedState, discretizedAction);
+			double toReturn = 0;
+			if (currentMode == 0) { // UCT
+				toReturn = Q.get(qInput) + 2 * (maxReward / (1 - learningRate)) * 
+					Math.sqrt(Math.log(s_Counts.get(environment)) / s_a_Counts.get(qInput));
+			} else if (currentMode == 1) { // ACtion
+				toReturn = Q.get(qInput);
+			}
+			return toReturn;
+		}
+
+		/**
+		 * Discretize an action into {@link #numberOfBins} parts.
+		 * @param action the action.
+		 * @return the discretized action.
+		 */
+		private double[] discretize(double[] action) {
+			double[] values = action.clone();
+			for (int i = 0; i < actionParameters; i++) {
+				int  count = (int ) (values[i] / stepSizes[i]);
+				values[i] = count * stepSizes[i];
+			}
+			return values;
+		}
+
+		/**
+		 * Join two arrays.
+		 * @param a first array.
+		 * @param b second array.
+		 * @return the joined array, with {@code a} before {@code b}.
+		 */
+		private double[] join(double[] a, double[] b) {
+			int length = a.length + b.length;
+			double[] toReturn = new double[length];
+			for (int i = 0; i < length; i++) {
+				if (i > a.length - 1) {
+					toReturn[i] = b[i - a.length];
+				} else {
+					toReturn[i] = a[i];
+				}
+			}
+			return toReturn;
+		}
+	}
+
 }

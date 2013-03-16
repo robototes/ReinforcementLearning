@@ -24,11 +24,11 @@ public abstract class DefaultOptimizer implements Optimizer {
 	/**
 	 * Minimum variable values. Used to choose random starting points.
 	 */
-	private final double[] minimums;
+	protected final double[] minimums;
 	/**
 	 * Maximum Variable values. Used to choose random starting points.
 	 */
-	private final double[] maximums;
+	protected final double[] maximums;
 	/**
 	 * Step size for Pattern Search algorithm. Defaults to ten percent of
 	 * average variable range.
