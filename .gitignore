@@ -8,3 +8,4 @@ j2meclasses/*
 *.tmp
 
 Thumbs.db
+Module/*
