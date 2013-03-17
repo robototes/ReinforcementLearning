@@ -46,19 +46,49 @@ public final class HelpTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        header = new javax.swing.JLabel();
+        tabContainer = new javax.swing.JTabbedPane();
+        javadocTab = new javax.swing.JTabbedPane();
+        conceptsTab = new javax.swing.JTabbedPane();
+
+        header.setBackground(new java.awt.Color(255, 38, 38));
+        header.setFont(new java.awt.Font("CMU Serif", 0, 32)); // NOI18N
+        header.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/shsrobotics/reinforcementlearning/module/images/iconRawSmall.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(header, org.openide.util.NbBundle.getMessage(HelpTopComponent.class, "HelpTopComponent.header.text")); // NOI18N
+        header.setToolTipText(org.openide.util.NbBundle.getMessage(HelpTopComponent.class, "HelpTopComponent.header.toolTipText")); // NOI18N
+
+        tabContainer.setBackground(new java.awt.Color(229, 229, 229));
+
+        javadocTab.setFont(new java.awt.Font("CMU Serif", 0, 12)); // NOI18N
+        tabContainer.addTab(org.openide.util.NbBundle.getMessage(HelpTopComponent.class, "HelpTopComponent.javadocTab.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/com/shsrobotics/reinforcementlearning/module/images/helpIcon.png")), javadocTab); // NOI18N
+
+        conceptsTab.setFocusable(false);
+        conceptsTab.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
+        tabContainer.addTab(org.openide.util.NbBundle.getMessage(HelpTopComponent.class, "HelpTopComponent.conceptsTab.TabConstraints.tabTitle"), new javax.swing.ImageIcon(getClass().getResource("/com/shsrobotics/reinforcementlearning/module/images/icon.png")), conceptsTab); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addComponent(tabContainer, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(header, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(header)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tabContainer, javax.swing.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE))
         );
+
+        tabContainer.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(HelpTopComponent.class, "HelpTopComponent.tabContainer.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTabbedPane conceptsTab;
+    private javax.swing.JLabel header;
+    private javax.swing.JTabbedPane javadocTab;
+    private javax.swing.JTabbedPane tabContainer;
     // End of variables declaration//GEN-END:variables
 	@Override
 	public void componentOpened() {

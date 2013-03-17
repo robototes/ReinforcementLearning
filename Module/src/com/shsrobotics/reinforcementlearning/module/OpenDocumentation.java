@@ -27,9 +27,7 @@ public class OpenDocumentation implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Mode main = WindowManager.getDefault().findMode("editor");
-		TopComponent component = WindowManager.getDefault().findTopComponent("HelpTopComponent");
-		main.dockInto(component);
+		HelpTopComponent component = new HelpTopComponent();
 		component.setVisible(true);
 		component.open();
 		component.requestActive();
