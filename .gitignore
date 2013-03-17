@@ -1,0 +1,9 @@
+suite/*
+build/*
+resources/*
+j2meclasses/*
+
+*.jar
+*.class
+*.tmp
+/dist/
