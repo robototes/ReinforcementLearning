@@ -7,3 +7,5 @@ j2meclasses/*
 *.class
 *.tmp
 /dist/
+/Module/nbproject/private/
+/Module/build/
