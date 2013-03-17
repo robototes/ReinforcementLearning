@@ -13,6 +13,7 @@
         </data>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
             <word>backpropagated</word>
+            <word>discretized</word>
             <word>Nelder</word>
             <word>overfitting</word>
         </spellchecker-wordlist>
