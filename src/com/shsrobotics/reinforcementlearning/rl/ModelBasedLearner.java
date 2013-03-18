@@ -2,7 +2,8 @@ package com.shsrobotics.reinforcementlearning.rl;
 
 import com.shsrobotics.reinforcementlearning.optimizers.DefaultOptimizer;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
-import com.shsrobotics.reinforcementlearning.supervisedlearners.TestLearner;
+import com.shsrobotics.reinforcementlearning.supervisedlearners.KNNLearner;
+import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.Map;
 
 /**
@@ -51,6 +52,11 @@ public class ModelBasedLearner extends RLAgent {
 	 * from {@link #numberOfBins}.
 	 */
 	private double[] stepSizes;
+
+	/**
+	 * Joined array of state and action names.
+	 */
+	private String[] inputKeys;
 	
 	/**
 	 * The supervised learner to predict rewards and/or state values.
@@ -94,9 +100,10 @@ public class ModelBasedLearner extends RLAgent {
 		
 		double[] minimums = join(minimumStateValues, minimumActionValues);
 		double[] maximums = join(maximumStateValues, maximumActionValues);
-		supervisedLearner = new TestLearner[stateParameters + 1]; // placeholder
+		inputKeys = join(stateNames, actionNames);
+		supervisedLearner = new KNNLearner[stateParameters + 1]; // placeholder
 		for (int i = 0; i <= stateParameters; i++) { // fill array of learners
-			supervisedLearner[i] = new TestLearner(minimums, maximums);
+			supervisedLearner[i] = new KNNLearner(minimums, maximums);
 			stepSizes[i] = (maximumStateValues[i] - minimumStateValues[i]) / numberOfBins;
 		}
 	}
@@ -148,7 +155,7 @@ public class ModelBasedLearner extends RLAgent {
 	Prediction queryModel(State state, Action action) {
 		double[] predictedValues = new double[stateParameters];
 		double[] stateValues = state.get();
-		double[] input = join(stateValues, action.get());
+		DataPoint input = new DataPoint(inputKeys, join(stateValues, action.get()), true);
 		for (int parameter = 0; parameter < stateParameters; parameter++) {
 			predictedValues[parameter] = stateValues[parameter] + supervisedLearner[parameter].query(input);
 		}
@@ -170,9 +177,9 @@ public class ModelBasedLearner extends RLAgent {
 		//update each transition model
 		double[] input = join(stateValues, action.get());
 		for (int parameter = 0; parameter < stateParameters; parameter++) {
-			supervisedLearner[parameter].update(input, transition[parameter]);
+			supervisedLearner[parameter].update(new DataPoint(input, transition[parameter]));
 		}
-		supervisedLearner[rewardModel].update(input, reward); // reward model		
+		supervisedLearner[rewardModel].update(new DataPoint(input, reward)); // reward model		
 	}
 	
 	/**
@@ -184,6 +191,25 @@ public class ModelBasedLearner extends RLAgent {
 	private double[] join(double[] a, double[] b) {
 		int length = a.length + b.length;
 		double[] toReturn = new double[length];
+		for (int i = 0; i < length; i++) {
+			if (i > a.length - 1) {
+				toReturn[i] = b[i - a.length];
+			} else {
+				toReturn[i] = a[i];
+			}
+		}
+		return toReturn;
+	}	
+	
+	/**
+	 * Join two arrays.
+	 * @param a first array.
+	 * @param b second array.
+	 * @return the joined array, with {@code a} before {@code b}.
+	 */
+	private String[] join(String[] a, String[] b) {
+		int length = a.length + b.length;
+		String[] toReturn = new String[length];
 		for (int i = 0; i < length; i++) {
 			if (i > a.length - 1) {
 				toReturn[i] = b[i - a.length];
