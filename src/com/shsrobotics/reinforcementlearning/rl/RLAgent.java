@@ -262,8 +262,8 @@ public abstract class RLAgent {
 	}
 	
 	/**
-	 * Set of state parameters.
-	 */
+	* Set of state parameters.
+	*/
 	public class State extends DataPoint {
 		/**
 		 * Create a state.
@@ -272,14 +272,14 @@ public abstract class RLAgent {
 		 */
 		public State(String[] keys, double[] values) {
 			super(keys, values, true);
-			if (keys.length != actionParameters) {
+			if (keys.length != stateParameters) {
 				throw new Error("Incorrect key length");
 			}
-			if (values.length != actionParameters) {
+			if (values.length != stateParameters) {
 				throw new Error("Incorrect value length");
 			}
 		}
-		
+
 		/**
 		 * Get the value for a parameter.
 		 * @param key the parameter name.
@@ -288,7 +288,7 @@ public abstract class RLAgent {
 		public double getStateParameter(String key) {
 			return getInput(key);
 		}
-		
+
 		/**
 		 * Get all of the parameters.
 		 * @return raw parameter values.
@@ -297,6 +297,7 @@ public abstract class RLAgent {
 			return getInputs();
 		}
 	}
+
 	
 	/**
      * Fill an array with random action values

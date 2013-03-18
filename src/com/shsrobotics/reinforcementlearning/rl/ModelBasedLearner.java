@@ -262,7 +262,9 @@ public class ModelBasedLearner extends RLAgent {
 	 * Maximize Q-Values by finding the best action.
 	 */
 	public class QMaximizer extends DefaultOptimizer {
-
+		/**
+		 * The current state
+		 */
 		private State environment;
 
 		/**
