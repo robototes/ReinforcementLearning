@@ -1,6 +1,7 @@
 package com.shsrobotics.reinforcementlearning.supervisedlearners;
 
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
+import java.util.ArrayList;
 
 /**
  * A supervised learner.
@@ -18,7 +19,7 @@ public abstract class SupervisedLearner {
 	/**
 	 * The model data.
 	 */
-	protected DataPoint[] data;
+	protected ArrayList<DataPoint> data;
 	
 	
 	/**
@@ -29,19 +30,19 @@ public abstract class SupervisedLearner {
 	public SupervisedLearner(double[] minimums, double[] maximums) {
 		this.minimums = minimums;
 		this.maximums = maximums;
+		data = new ArrayList<>();
 	}
 	
 	/**
 	 * Update the model with new experiences.
-	 * @param input the input values.
-	 * @param output the correct output value.
+	 * @param dataPoint the data point to add.
 	 */
-	public abstract void update(double[] input, double output);
+	public abstract void update(DataPoint dataPoint);
 	
 	/**
 	 * Query the learner for a prediction.
 	 * @param input the input values.
 	 * @return the predicted output value.
 	 */
-	public abstract double query(double[] input);
+	public abstract double query(DataPoint input);
 }
