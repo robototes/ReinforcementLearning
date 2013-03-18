@@ -6,4 +6,9 @@ package com.shsrobotics.reinforcementlearning.architecture;
  */
 public class ForestManager {
 	
+	public ForestManager() {
+		if ( Runtime.getRuntime().availableProcessors() < 3 )
+			throw new NotEnoughProcessorsError();
+	}
+	
 }
