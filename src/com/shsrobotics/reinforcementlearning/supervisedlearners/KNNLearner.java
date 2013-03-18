@@ -2,7 +2,6 @@ package com.shsrobotics.reinforcementlearning.supervisedlearners;
 
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
 import java.util.ArrayList;
-import sun.nio.cs.ext.ISCII91;
 
 /**
  * Regression K-Nearest-Neighbor algorithm.
