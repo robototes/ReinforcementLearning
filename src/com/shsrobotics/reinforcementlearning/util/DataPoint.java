@@ -175,7 +175,15 @@ public class DataPoint {
 	public double[] getOutputs() {
 		return output;
 	}
-
+	
+	/**
+	 * Get all the output value.
+	 * <p/>
+	 * @return the values.
+	 */
+	public double getOutput() {
+		return output[0];
+	}
 	/**
 	 * Finds the value from an array of string keys
 	 * <p/>
