@@ -124,6 +124,10 @@ public abstract class RLAgent {
 		maximumActionValues = ranges.get("Maximum Action Values");
 		minimumStateValues = ranges.get("Minimum State Values");
 		maximumStateValues = ranges.get("Maximum State Values");
+		if (minimumActionValues == null || maximumActionValues == null
+			|| minimumStateValues == null || maximumStateValues == null) {
+			throw new Error("Null range.");
+		}
 	}
 	
 	/**
@@ -157,6 +161,8 @@ public abstract class RLAgent {
 	 * @return correct {@link Action}.
 	 */
 	abstract double[] query(State state);
+	
+	public void plan(State state) { }
 	
 	/**
 	 * Update the supervised learner with a new data point.

@@ -1,9 +1,10 @@
 package com.shsrobotics.reinforcementlearning.rl;
 
 import com.shsrobotics.reinforcementlearning.optimizers.DefaultOptimizer;
-import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.KNNLearner;
+import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -29,7 +30,7 @@ public class ModelBasedLearner extends RLAgent {
 	/**
 	 * Q-Values for each state-action pair.
 	 */
-	private Map<double[], Double> Q;
+	private Map<double[], Double> QValues;
 	/**
 	 * Visit counts for each discretized state-action pair.
 	 */
@@ -79,7 +80,7 @@ public class ModelBasedLearner extends RLAgent {
 	 *			<li>{@code "Maximum Action Values"}</li>
 	 *			<li>{@code "Minimum State Values"}</li>
 	 *			<li>{@code "Maximum State Values"}</li>
-	 *			<li>{@code "Maximum Reward"}<br />  The value should be at index 0.</li>
+	 *			<li>{@code "Reward Range"}<br />  The minimum should be at index 0, maximum at index 1.</li>
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
@@ -94,18 +95,32 @@ public class ModelBasedLearner extends RLAgent {
 		
 		rewardModel = stateParameters;
 		
+		stepSizes = new double[actionParameters + 1];
 		qMaximizer = new QMaximizer();
 		
-		maxReward = ranges.get("Maximum Reward")[0];
+		double[] rewardArray = ranges.get("Reward Range");
+		if (rewardArray != null) {
+			maxReward = rewardArray[1];
+		} else {
+			throw new Error("Reward range missing.");
+		}
 		
 		double[] minimums = join(minimumStateValues, minimumActionValues);
 		double[] maximums = join(maximumStateValues, maximumActionValues);
 		inputKeys = join(stateNames, actionNames);
 		supervisedLearner = new KNNLearner[stateParameters + 1]; // placeholder
-		for (int i = 0; i <= stateParameters; i++) { // fill array of learners
+		for (int i = 0; i < stateParameters; i++) { // fill array of learners
 			supervisedLearner[i] = new KNNLearner(minimums, maximums);
 			stepSizes[i] = (maximumStateValues[i] - minimumStateValues[i]) / numberOfBins;
 		}
+		double[] rewardMin = {rewardArray[0]};
+		double[] rewardMax = {rewardArray[1]};
+		supervisedLearner[rewardModel] = new KNNLearner(rewardMin, rewardMax);		
+		stepSizes[rewardModel] = (rewardMin[0] - rewardMax[0]) / numberOfBins;
+		
+		QValues = new HashMap<>();
+		s_a_Counts = new HashMap<>();
+		s_Counts = new HashMap<>();
 	}
 	
 	@Override
@@ -114,6 +129,11 @@ public class ModelBasedLearner extends RLAgent {
 		qMaximizer.setMode(1);
 		qMaximizer.setState(discretized);
 		return qMaximizer.maximize();
+	}
+	
+	@Override
+	public void plan(State state) {
+		UCTSearch(state, 0);
 	}
 	
 	/**
@@ -141,7 +161,7 @@ public class ModelBasedLearner extends RLAgent {
 		//update Q
 		qMaximizer.setMode(1);
 		double newQ = discountFactor * sampleReturn + (1 - discountFactor) * qMaximizer.f(qMaximizer.maximize());
-		Q.put(stateAction, newQ);
+		QValues.put(stateAction, newQ);
 		return 0;
 	}
 	
@@ -219,6 +239,22 @@ public class ModelBasedLearner extends RLAgent {
 		}
 		return toReturn;
 	}	
+	
+	/**
+	 * Push a value to an array.
+	 * @param a the array.
+	 * @param b the value.
+	 * @return the joined array, with {@code a} before {@code b}.
+	 */
+	private double[] push(double[] a, double b) {
+		int length = a.length;
+		double[] toReturn = new double[length + 1];
+		for (int i = 0; i < length; i++) {
+			toReturn[i] = a[i];
+		}
+		toReturn[length] = b;
+		return toReturn;
+	}	
 
 	/**
 	 * Discretize a state into {@link #numberOfBins} parts.
@@ -273,11 +309,6 @@ public class ModelBasedLearner extends RLAgent {
 		private int actionParameters;
 
 		/**
-		 * Saves the best action so far.
-		 */
-		private double[] bestAction;
-
-		/**
 		 * Mode of the {@link QMaximizer}.
 		 */
 		private int currentMode;
@@ -288,9 +319,8 @@ public class ModelBasedLearner extends RLAgent {
 		 * @param maximums the maximum action values.
 		 */
 		public QMaximizer () {
-			super(16, minimumActionValues, minimumStateValues);
-
-			actionParameters = minimums.length;
+			super(16, minimumActionValues, maximumActionValues);
+			
 			for (int i = 0; i <= actionParameters; i++) { // calculate step sizes
 				stepSizes[i] = (maximums[i] - minimums[i]) / numberOfBins;
 			}
@@ -318,11 +348,17 @@ public class ModelBasedLearner extends RLAgent {
 			double[] discretizedState = environment.get();
 			double[] qInput = join(discretizedState, discretizedAction);
 			double toReturn = 0;
+			Double qValue = QValues.get(qInput);
+			if (qValue == null) qValue = 0.0;
 			if (currentMode == 0) { // UCT
-				toReturn = Q.get(qInput) + 2 * (maxReward / (1 - learningRate)) * 
-					Math.sqrt(Math.log(s_Counts.get(environment)) / s_a_Counts.get(qInput));
+				Integer s_Count = s_Counts.get(environment);
+				Integer s_a_Count = s_a_Counts.get(environment);
+				if (s_Count == null) s_Count = 1;
+				if (s_a_Count == null) s_a_Count = 1;
+				toReturn = qValue + 2 * (maxReward / (1 - learningRate)) * 
+					Math.sqrt(Math.log(s_Count) / s_a_Count);
 			} else if (currentMode == 1) { // ACtion
-				toReturn = Q.get(qInput);
+				toReturn = qValue;
 			}
 			return toReturn;
 		}
