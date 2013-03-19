@@ -153,11 +153,16 @@ public class ModelBasedLearner extends RLAgent {
 		
 		Action bestAction = new Action(actionNames, qMaximizer.maximize()); // find best action		
 		Prediction prediction = queryModel(discretized, bestAction); // predict new state and reward 		
-		double sampleReturn = prediction.reward + learningRate * UCTSearch(prediction.state, depth++); // recursive search
+		double sampleReturn = prediction.reward + learningRate * UCTSearch(prediction.state, ++depth); // recursive search
 		//update counts
 		double[] stateAction = join(discretized.get(), bestAction.get());
-		s_Counts.put(discretized, s_Counts.get(discretized) + 1);
-		s_a_Counts.put(stateAction, s_Counts.get(discretized) + 1);
+		Integer s_Count = s_Counts.get(discretized);
+		Integer s_a_Count = s_a_Counts.get(stateAction);
+		if (s_Count == null) s_Count = 0;
+		if (s_a_Count == null) s_a_Count = 0;
+		
+		s_Counts.put(discretized, s_Count + 1);
+		s_a_Counts.put(stateAction, s_a_Count + 1);
 		//update Q
 		qMaximizer.setMode(1);
 		double newQ = discountFactor * sampleReturn + (1 - discountFactor) * qMaximizer.f(qMaximizer.maximize());
@@ -273,7 +278,7 @@ public class ModelBasedLearner extends RLAgent {
 	/**
 	 * A model prediction.
 	 */
-	private class Prediction {
+	public class Prediction {
 		/**
 		 * The state prediction.
 		 */

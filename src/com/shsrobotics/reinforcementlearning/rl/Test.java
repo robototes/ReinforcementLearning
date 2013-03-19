@@ -1,6 +1,8 @@
 package com.shsrobotics.reinforcementlearning.rl;
 
+import com.shsrobotics.reinforcementlearning.rl.ModelBasedLearner.Prediction;
 import com.shsrobotics.reinforcementlearning.rl.RLAgent.Action;
+import com.shsrobotics.reinforcementlearning.rl.RLAgent.Mode;
 import com.shsrobotics.reinforcementlearning.rl.RLAgent.State;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,25 +18,33 @@ public class Test {
 	public static final double[] maximumStateValues = {20};
 	public static final double[] rewardRange = {-4, 10};
 	
+	public static ModelBasedLearner learner;
+	
 	static double[] environment = {0};
 	
 	public static void main(String[] args) {
 		options.put("Accuracy", 0.85);
+		options.put("Exploration Rate", 1.0);
 		ranges.put("Minimum Action Values", minimumActionValues);
 		ranges.put("Maximum Action Values", maximumActionValues);
 		ranges.put("Minimum State Values", minimumStateValues);
 		ranges.put("Maximum State Values", maximumStateValues);
 		ranges.put("Reward Range", rewardRange);
-		ModelBasedLearner learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
 		
+		run();
+	}
+	
+	public static void run() {
+		learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
 		learner.setMode(RLAgent.Mode.kLearn);
 		
-		for (int i = 0; i < 100; i++) {
-			if (environment[0] < 20) {
-				environment[0]++;
-			}
+		for (int i = 0; i < 5000; i++) {
+			environment[0]++;
+			checkEnvironment();
 			State state = learner.new State(stateNames, environment);
-			Action action = learner.requestAction(state);
+			double[] actionValues = learner.requestAction(state).get();
+			actionValues[0] = Math.round(actionValues[0]);
+			Action action = learner.new Action(actionNames, actionValues);
 			double reward = requestReward(action);
 			State newState = learner.new State(stateNames, environment);
 			learner.updateSupervisedLearner(state, action, newState, reward);
@@ -42,27 +52,48 @@ public class Test {
 		}
 		
 		learner.setMode(RLAgent.Mode.kAct);
-		State state = learner.new State(stateNames, environment);
-		Action action = learner.requestAction(state);
-		System.out.println("Opened new line: " + (Math.round(action.get()[0]) == 1));
+		environment[0] = 05;
+		for (int i = 0; i < 10; i++) {
+			State state = learner.new State(stateNames, environment);
+			double[] actionValues = learner.requestAction(state).get();
+			actionValues[0] = Math.round(actionValues[0]);
+			Action action = learner.new Action(actionNames, actionValues);
+			Prediction queryModel = learner.queryModel(state, action);
+			System.out.println("Actual Reward: " + requestReward(action));
+			System.out.println("Predicted Reward: " + queryModel.reward);
+			System.out.println("Predicted New People: " + queryModel.state.get()[0]);
+			System.out.println();
+		}
 	}
 
 	private static double requestReward(Action action) {
 		boolean opened = (Math.round(action.get()[0]) == 1);
 		int people = (int) environment[0];
 		if (opened) {
-			environment[0] -= 2;
+			if (learner.getMode() == Mode.kAct) System.out.println("Opened a new line with " + people + " people in line.");		
+			environment[0] = Math.ceil(environment[0] / 1.25);
+			checkEnvironment();
 			if (people > 10) {
 				return 10;
 			} else {
 				return -2;
 			}
 		} else {
+			if (learner.getMode() == Mode.kAct) System.out.println("Did not open a new line with " + people + " people in line.");		
 			if (people > 10) {
 				return -4;
 			} else {
 				return 0;
 			}
+		}
+	}
+	
+	private static void checkEnvironment() {
+		if (environment[0] > 20) {
+			environment[0] = 20;
+		}
+		if (environment[0] < 0) {
+			environment[0] = 0;
 		}
 	}
 }

@@ -49,9 +49,13 @@ public class KNNLearner extends SupervisedLearner {
 
 	@Override
 	public double query(DataPoint input) {
+		int kToUse = k;
 		int length = data.size();
 		if (length == 0) {
 			throw new Error("No data.");
+		}
+		if (length < k) {
+			k = length;
 		}
 
 		ArrayList<OutputDouble> distance = new ArrayList<>(); // sorted distances by best
@@ -79,7 +83,6 @@ public class KNNLearner extends SupervisedLearner {
 				}
 			}
 		}
-
 		distance.subList(0, k).toArray(); // get k nearest neighbors
 
 		double numerator = 0.0;

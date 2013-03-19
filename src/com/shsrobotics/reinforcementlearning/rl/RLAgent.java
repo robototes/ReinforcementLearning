@@ -182,6 +182,14 @@ public abstract class RLAgent {
 	}
 	
 	/**
+	 * Get the learner mode.
+	 * @return the current mode.
+	 */
+	public Mode getMode() {
+		return currentMode;
+	}
+	
+	/**
      * A mode that the {@link QLearner} can operate in.
      */
     public static class Mode { 
