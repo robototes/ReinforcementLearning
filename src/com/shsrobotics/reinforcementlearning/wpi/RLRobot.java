@@ -1,8 +1,10 @@
 package com.shsrobotics.reinforcementlearning.wpi;
 
 import com.shsrobotics.reinforcementlearning.architecture.Architecture;
+import edu.wpi.first.wpilibj.NamedSendable;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.communication.FRCControl;
+import edu.wpi.first.wpilibj.tables.ITable;
 
 /**
  * A robot that runs Team 2412's Reinforcement Learning architecture.
@@ -15,14 +17,22 @@ import edu.wpi.first.wpilibj.communication.FRCControl;
  * 
  * @author Team 2412.
  */
-public abstract class RLRobot extends RobotBase {
+public abstract class RLRobot extends RobotBase implements NamedSendable {
 
+	/**
+	 * Current robot mode.
+	 */
 	private RobotMode currentMode;
+	/**
+	 * Table of values
+	 */
+	private ITable table;
 	
 	/**
 	 * Create an {@link RL Robot}. 
 	 */
 	public RLRobot() {
+		table.putValue("Current Mode", RobotMode.kDisabled);
 		currentMode = RLRobot.RobotMode.kDisabled;
 	}
 	
@@ -125,6 +135,10 @@ public abstract class RLRobot extends RobotBase {
 			}
 		}
 	}
+
+	public RobotMode getMode() {
+		return this.currentMode;		
+	}
 	
 	/**
 	 * The mode of the robot.
@@ -134,17 +148,20 @@ public abstract class RLRobot extends RobotBase {
 		/**
 		 * Use RL algorithm.
 		 */
-		public static final RobotMode kReinforcementLearning = new RobotMode(true, true);
+		public static final RobotMode kReinforcementLearning = new RobotMode("Reinforcement Learning Mode", true, true);
 		/**
 		 * Let the user drive.
 		 */
-		public static final RobotMode kTeleOperated = new RobotMode(false, true);
+		public static final RobotMode kTeleOperated = new RobotMode("Tele-Operated Mode", false, true);
 		/**
 		 * Disabled.
 		 */
-		public static final RobotMode kDisabled = new RobotMode(false, false);
+		public static final RobotMode kDisabled = new RobotMode("DISABLED", false, false);
 		
-		
+		/**
+		 * The human-readable mode name.
+		 */
+		private String name;
 		/**
 		 * Use the RL learner.
 		 */
@@ -156,12 +173,41 @@ public abstract class RLRobot extends RobotBase {
 		
 		/**
 		 * Enumeration constructor.
+		 * @param name see {@link #name}
 		 * @param useLearner see {@link #useLearner}
 		 * @param motorUse see {@link #motorUse}
 		 */
-		private RobotMode(boolean useLearner, boolean motorUse) {
+		private RobotMode(String name, boolean useLearner, boolean motorUse) {
+			this.name = name;
 			this.useLearner = useLearner;
 			this.motorUse = motorUse;
 		}
+		
+		/**
+		 * Get the mode's human-readable name.
+		 * @return 
+		 */
+		public String getName() {
+			return name;
+		}
+	}
+	
+	public String getName() {
+		return "REINFORCEMENT LEARNER";
+	}
+	
+	@Override
+	public void initTable(ITable subtable) {
+		this.table = subtable;
+	}
+	
+	@Override
+	public ITable getTable() {
+		return this.table;
+	}
+	
+	@Override
+	public String getSmartDashboardType() {
+		return "Reinforcement Learning Agent";
 	}
 }

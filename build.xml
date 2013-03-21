@@ -5,7 +5,10 @@
 	<target description="Bundle sources in a jar" name="package-sources">
 		<jar basedir="src" destfile="dist/com.shsrobotics.reinforcmentlearning-src.jar"/>
 	</target>
-	<target name="-post-jar" depends="package-sources">
+	<target description="Create widget jar" name="widget">
+		<jar basedir="src/com/shsrobotics/reinforcementlearning/wpi" excludesfile="RLRobot.java" file="RLWidget.java" destfile="dist/widget.jar" />
+	</target>
+	<target name="-post-jar" depends="package-sources, widget">
 		<copy overwrite="true" tofile="${dist.dir}/README.TXT" file="${basedir}/LGPL_for_Code.txt" /> 
 	</target>
 </project>
