@@ -38,7 +38,7 @@ public class Test {
 		learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
 		learner.setMode(RLAgent.Mode.kLearn);
 		
-		for (int i = 0; i < 5000; i++) {
+		for (int i = 0; i < 500; i++) {
 			environment[0]++;
 			checkEnvironment();
 			State state = learner.new State(stateNames, environment);
@@ -47,8 +47,7 @@ public class Test {
 			Action action = learner.new Action(actionNames, actionValues);
 			double reward = requestReward(action);
 			State newState = learner.new State(stateNames, environment);
-			learner.updateSupervisedLearner(state, action, newState, reward);
-			learner.plan(newState);
+			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
 		}
 		
 		learner.setMode(RLAgent.Mode.kAct);
@@ -59,10 +58,13 @@ public class Test {
 			actionValues[0] = Math.round(actionValues[0]);
 			Action action = learner.new Action(actionNames, actionValues);
 			Prediction queryModel = learner.queryModel(state, action);
+			
 			System.out.println("Actual Reward: " + requestReward(action));
 			System.out.println("Predicted Reward: " + queryModel.reward);
 			System.out.println("Predicted New People: " + queryModel.state.get()[0]);
 			System.out.println();
+			
+			environment[0]++;
 		}
 	}
 
@@ -71,7 +73,7 @@ public class Test {
 		int people = (int) environment[0];
 		if (opened) {
 			if (learner.getMode() == Mode.kAct) System.out.println("Opened a new line with " + people + " people in line.");		
-			environment[0] = Math.ceil(environment[0] / 1.25);
+			environment[0] -= 2;
 			checkEnvironment();
 			if (people > 10) {
 				return 10;

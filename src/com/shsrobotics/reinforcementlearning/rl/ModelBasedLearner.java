@@ -4,6 +4,7 @@ import com.shsrobotics.reinforcementlearning.optimizers.DefaultOptimizer;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.KNNLearner;
 import com.shsrobotics.reinforcementlearning.supervisedlearners.SupervisedLearner;
 import com.shsrobotics.reinforcementlearning.util.DataPoint;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,31 +24,40 @@ public class ModelBasedLearner extends RLAgent {
 	private int rewardModel;
 	
 	/**
-	 * The maximum reward possible.
+	 * The current maximum sample return encountered.
 	 */
-	private double maxReward;
+	private double maximumSampleReturn = 0;
 	
 	/**
-	 * Q-Values for each state-action pair.
+	 * Q-Values for each state-action-history pair.
 	 */
-	private Map<double[], Double> QValues;
+	private Map<StateActionHistory, Double> QValues;
 	/**
-	 * Visit counts for each discretized state-action pair.
+	 * Visit counts for each discretized state-action-history pair.
 	 */
-	private Map<double[], Integer> s_a_Counts;
+	private Map<StateActionHistory, Integer> s_a_Counts;
 	/**
-	 * Visit counts for each discretized state.
+	 * Visit counts for each discretized state-history pair.
 	 */
-	private Map<State, Integer> s_Counts;
+	private Map<StateHistory, Integer> s_Counts;
+	/**
+	 * History of actions taken.
+	 * Index 0 is most recent.
+	 */
+	private ArrayList<Action> history;
 	/**
 	 * Maximum UCT Search depth.
 	 */
-	private int maxDepth = 4;
+	private int maxDepth = 8;
+	/**
+	 * The number of previous actions to keep in the history.
+	 */
+	private Integer historyLength = 0; // Integer to avoid null pointer
 	
 	/**
 	 * Number of discrete values for each feature.
 	 */
-	private int numberOfBins = 3000;
+	private int numberOfBins = 250;
 	/**
 	 * Array of minimum step sizes for each feature, calculated 
 	 * from {@link #numberOfBins}.
@@ -84,7 +94,7 @@ public class ModelBasedLearner extends RLAgent {
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
-	 *			<li>{@code "Exploration Rate"} -- {@link #explorationRate}</li>
+	 *			<li>{@code "History Length"} -- {@link #historyLength}</li>
 	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
@@ -99,10 +109,13 @@ public class ModelBasedLearner extends RLAgent {
 		qMaximizer = new QMaximizer();
 		
 		double[] rewardArray = ranges.get("Reward Range");
-		if (rewardArray != null) {
-			maxReward = rewardArray[1];
-		} else {
+		if (rewardArray == null) {
 			throw new Error("Reward range missing.");
+		}
+		
+		this.historyLength = (Integer) options.get("History Length");
+		if (this.historyLength == null) {
+			this.historyLength = 0;
 		}
 		
 		double[] minimums = join(minimumStateValues, minimumActionValues);
@@ -121,19 +134,20 @@ public class ModelBasedLearner extends RLAgent {
 		QValues = new HashMap<>();
 		s_a_Counts = new HashMap<>();
 		s_Counts = new HashMap<>();
+		history = new ArrayList<>(historyLength);
 	}
 	
 	@Override
 	double[] query(State state) {
 		State discretized = discretize(state);
-		qMaximizer.setMode(1);
-		qMaximizer.setState(discretized);
-		return qMaximizer.maximize();
+		return qMaximizer.setMode(QMaximizer.kActionMaximize).setState(discretized).maximize();
 	}
 	
 	@Override
-	public void plan(State state) {
-		UCTSearch(state, 0);
+	public RLAgent plan(State state) {
+		UCTSearch(new StateHistory(state, history), 0);
+		
+		return this;
 	}
 	
 	/**
@@ -142,32 +156,51 @@ public class ModelBasedLearner extends RLAgent {
 	 * @param depth the current search depth.
 	 * @return the correct {@link RLAgent.Action}.
 	 */
-	double UCTSearch(State state, int depth) {
+	double UCTSearch(StateHistory stateHistory, int depth) {
 		if (depth == maxDepth) {
 			return 0;
 		}
-		State discretized = discretize(state); //discretize state		
+		State state = stateHistory.getState();
+		State discretized = discretize(state); //discretize state	
 		//update Q maximizer
-		qMaximizer.setMode(0);
+		qMaximizer.setMode(QMaximizer.kUCTMaximize);
 		qMaximizer.setState(discretized);
 		
 		Action bestAction = new Action(actionNames, qMaximizer.maximize()); // find best action		
-		Prediction prediction = queryModel(discretized, bestAction); // predict new state and reward 		
-		double sampleReturn = prediction.reward + learningRate * UCTSearch(prediction.state, ++depth); // recursive search
+		Prediction prediction = queryModel(discretized, bestAction); // predict new state and reward
+		//update history and make recursive method call
+		stateHistory.addAction(bestAction).setState(prediction.state);
+		double sampleReturn = prediction.reward + discountFactor * UCTSearch(stateHistory, depth + 1); // recursive search
+		maximumSampleReturn = Math.max(sampleReturn, maximumSampleReturn); // update maximum sample return
 		//update counts
-		double[] stateAction = join(discretized.get(), bestAction.get());
-		Integer s_Count = s_Counts.get(discretized);
-		Integer s_a_Count = s_a_Counts.get(stateAction);
+		StateActionHistory stateActionHistory = new StateActionHistory(prediction.state, bestAction, history);
+		
+		Integer s_Count = s_Counts.get(stateHistory);
+		Integer s_a_Count = s_a_Counts.get(stateActionHistory);
 		if (s_Count == null) s_Count = 0;
 		if (s_a_Count == null) s_a_Count = 0;
 		
-		s_Counts.put(discretized, s_Count + 1);
-		s_a_Counts.put(stateAction, s_a_Count + 1);
+		s_Counts.put(stateHistory, s_Count + 1);
+		s_a_Counts.put(stateActionHistory, s_a_Count + 1);
 		//update Q
-		qMaximizer.setMode(1);
-		double newQ = discountFactor * sampleReturn + (1 - discountFactor) * qMaximizer.f(qMaximizer.maximize());
-		QValues.put(stateAction, newQ);
-		return 0;
+		double newQ = learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(bestAction.get());
+		QValues.put(stateActionHistory, newQ);
+		
+		qMaximizer.setMode(QMaximizer.kActionMaximize);
+		return learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(qMaximizer.maximize());
+	}
+	
+	/**
+	 * Lower the importance of the last planning rollout to allow for better exploration now.
+	 */
+	public ModelBasedLearner UCTReset() {
+		for (Map.Entry pair : s_Counts.entrySet()) {
+			pair.setValue((Integer) pair.getValue() / 2);
+		}
+		for (Map.Entry pair : s_a_Counts.entrySet()) {
+			pair.setValue((Integer) pair.getValue() / 2);
+		}
+		return this;
 	}
 	
 	/**
@@ -190,7 +223,10 @@ public class ModelBasedLearner extends RLAgent {
 	}
 
 	@Override
-	public void updateSupervisedLearner(State state, Action action, State newState, double reward) {
+	public RLAgent updateSupervisedLearner(State state, Action action, State newState, double reward) {
+		history.add(0, action);
+		history.trimToSize();
+		
 		// calculate difference between states
 		double[] transition = new double[stateParameters];
 		double[] stateValues = state.get();
@@ -204,7 +240,9 @@ public class ModelBasedLearner extends RLAgent {
 		for (int parameter = 0; parameter < stateParameters; parameter++) {
 			supervisedLearner[parameter].update(new DataPoint(input, transition[parameter]));
 		}
-		supervisedLearner[rewardModel].update(new DataPoint(input, reward)); // reward model		
+		supervisedLearner[rewardModel].update(new DataPoint(input, reward)); // reward model	
+		
+		return this;
 	}
 	
 	/**
@@ -246,22 +284,6 @@ public class ModelBasedLearner extends RLAgent {
 	}	
 	
 	/**
-	 * Push a value to an array.
-	 * @param a the array.
-	 * @param b the value.
-	 * @return the joined array, with {@code a} before {@code b}.
-	 */
-	private double[] push(double[] a, double b) {
-		int length = a.length;
-		double[] toReturn = new double[length + 1];
-		for (int i = 0; i < length; i++) {
-			toReturn[i] = a[i];
-		}
-		toReturn[length] = b;
-		return toReturn;
-	}	
-
-	/**
 	 * Discretize a state into {@link #numberOfBins} parts.
 	 * @param action the state.
 	 * @return the discretized state.
@@ -273,6 +295,140 @@ public class ModelBasedLearner extends RLAgent {
 			values[i] = count * stepSizes[i];
 		}
 		return new State(stateNames, values);
+	}
+	
+	/**
+	 * Stores the current state as well an action as well as the past {@code k} actions.
+	 */
+	public class StateActionHistory {
+		/**
+		 * The state.
+		 */
+		private State state;
+		/**
+		 * The action.
+		 */
+		private Action action;
+		/**
+		 * The action history.
+		 */
+		private ArrayList<Action> history = new ArrayList<>(historyLength);
+		
+		/**
+		 * Create a State-history pair.
+		 * @param state
+		 * @param history
+		 */
+		public StateActionHistory(State state, Action action, ArrayList<Action> history) {
+			this.state = state;
+			this.action = action;
+			this.history = history;
+			this.history.trimToSize();
+		}
+		
+		/**
+		 * Get the state.
+		 * @return the state.
+		 */
+		public State getState() {
+			return state;
+		}
+				
+		/**
+		 * Get the history.
+		 * @return the action history.
+		 */
+		public Action[] getHistory() {
+			return (Action[]) history.toArray();
+		}
+		
+		/**
+		 * Get the action taken {@code iterationsBack} iterations ago.
+		 * @param iterationsBack the number of iterations back to get the action from.
+		 * @return the action.
+		 */
+		public Action getActionAt(int iterationsBack) {
+			return history.get(iterationsBack);
+		}
+		
+		/**
+		 * Get the action.
+		 * @return the action.
+		 */
+		public Action getAction() {
+			return action;
+		}
+	}
+	
+	/**
+	 * Stores the current state as well as the past {@code k} actions.
+	 */
+	public class StateHistory {
+		/**
+		 * The state.
+		 */
+		private State state;
+		/**
+		 * The action history.
+		 */
+		private ArrayList<Action> history = new ArrayList<>(historyLength);
+		
+		/**
+		 * Create a State-history pair.
+		 * @param state
+		 * @param history
+		 */
+		public StateHistory(State state, ArrayList<Action> history) {
+			this.state = state;
+			this.history = history;
+			this.history.trimToSize();
+		}
+		
+		/**
+		 * Get the state.
+		 * @return the state.
+		 */
+		public State getState() {
+			return state;
+		}
+		
+		/**
+		 * Set a new state.
+		 * @param newState the new state.
+		 * @return the class, for chaining method calls.
+		 */
+		public StateHistory setState(State newState) {
+			this.state = newState;
+			return this;
+		}
+		
+		/**
+		 * Push an action to the history.
+		 * @param newAction the action to add.
+		 * @return the class, for chaining method calls.
+		 */
+		public StateHistory addAction(Action newAction) {
+			history.add(0, newAction);
+			history.trimToSize();
+			return this;
+		}
+		
+		/**
+		 * Get the history.
+		 * @return the action history.
+		 */
+		public Action[] getHistory() {
+			return (Action[]) history.toArray();
+		}
+		
+		/**
+		 * Get the action taken {@code iterationsBack} iterations ago.
+		 * @param iterationsBack the number of iterations back to get the action from.
+		 * @return the action.
+		 */
+		public Action getAction(int iterationsBack) {
+			return history.get(iterationsBack);
+		}
 	}
 	
 	/**
@@ -317,6 +473,15 @@ public class ModelBasedLearner extends RLAgent {
 		 * Mode of the {@link QMaximizer}.
 		 */
 		private int currentMode;
+		
+		/**
+		 * Maximize for the UCT algorithm.
+		 */
+		public static final int kUCTMaximize = 0;
+		/**
+		 * Maximize for choosing the best action.
+		 */
+		public static final int kActionMaximize = 1;
 
 		/**
 		 * Create a {@link QMaximizer}.
@@ -334,35 +499,39 @@ public class ModelBasedLearner extends RLAgent {
 		/**
 		 * Set the state to use for maximization.
 		 * @param state the discretized state.
+		 * @return the class, for chaining method calls.
 		 */
-		public void setState(State state) {
+		public QMaximizer setState(State state) {
 			this.environment = state;
+			return this;
 		}
 		
 		/**
 		 * Set the mode of the Q-Maximizer.
 		 * @param mode the mode. {@code 0} for UCT-Search maximization, {@code 1} for Action maximization alone.
+		 * @return the class, for chaining method calls.
 		 */
-		public void setMode(int mode) {
+		public QMaximizer setMode(int mode) {
 			this.currentMode = mode;
+			return this;
 		}
 
 		@Override
 		public double f(double[] input) { // input is action values
-			double[] discretizedAction = discretize(input);
-			double[] discretizedState = environment.get();
-			double[] qInput = join(discretizedState, discretizedAction);
+			StateHistory stateHistory = new StateHistory(environment, history);
+			StateActionHistory stateActionHistory = new StateActionHistory(environment, 
+				new Action(actionNames, input), history);
 			double toReturn = 0;
-			Double qValue = QValues.get(qInput);
+			Double qValue = QValues.get(stateActionHistory);
 			if (qValue == null) qValue = 0.0;
-			if (currentMode == 0) { // UCT
-				Integer s_Count = s_Counts.get(environment);
-				Integer s_a_Count = s_a_Counts.get(environment);
+			if (currentMode == kUCTMaximize) {
+				Integer s_Count = s_Counts.get(stateHistory);
+				Integer s_a_Count = s_a_Counts.get(stateActionHistory);
 				if (s_Count == null) s_Count = 1;
 				if (s_a_Count == null) s_a_Count = 1;
-				toReturn = qValue + 2 * (maxReward / (1 - learningRate)) * 
+				toReturn = qValue + 2 * (maximumSampleReturn / (1 - discountFactor)) * 
 					Math.sqrt(Math.log(s_Count) / s_a_Count);
-			} else if (currentMode == 1) { // ACtion
+			} else if (currentMode == kActionMaximize) {
 				toReturn = qValue;
 			}
 			return toReturn;

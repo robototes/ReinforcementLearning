@@ -14,11 +14,6 @@ public abstract class RLAgent {
 	protected Mode currentMode = Mode.kOff;
 	
 	/**
-	 * Exploration rate of the learner.
-	 */
-	private double explorationRate;
-	
-	/**
 	 * Discount factor of the learner. A higher discount factor places more
 	 * value on short-term rewards.
 	 */
@@ -84,7 +79,6 @@ public abstract class RLAgent {
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
-	 *			<li>{@code "Exploration Rate"} -- {@link #explorationRate}</li>
 	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
@@ -95,12 +89,6 @@ public abstract class RLAgent {
 		this.actionParameters = actions.length;
 		this.stateNames = states;
 		this.stateParameters = states.length;
-		
-		if (options.containsKey("Exploration Rate")) {
-			this.explorationRate = (double) options.get("Exploration Rate");
-		} else {
-			this.explorationRate = 0.1; // default
-		}
 		
 		if (options.containsKey("Learning Rate")) {
 			this.learningRate = (double) options.get("Learning Rate");
@@ -137,22 +125,11 @@ public abstract class RLAgent {
 	 * {@link Mode}, then some actionParameters will be random.
 	 */
 	public final Action requestAction(State state) {
-		double exploreCutoff = explorationRate;        
-        double[] actionValues = new double[actionParameters];
-        
-        if (currentMode.chooseBestOption) { // check modes
-			exploreCutoff = 0.0;
-		}
         if (!currentMode.allowActionRequests || !currentMode.enabled) {
             throw new Error("Wrong learning mode.");
-        }
-        
-        if (Math.random() < exploreCutoff) { // choose random values
-            actionValues = rands();
-        } else {
-			actionValues = query(state);
 		}
-		return new Action(actionNames, actionValues);
+		
+		return new Action(actionNames, query(state));
 	}
 	
 	/**
@@ -162,7 +139,14 @@ public abstract class RLAgent {
 	 */
 	abstract double[] query(State state);
 	
-	public void plan(State state) { }
+	/**
+	 * Plan ahead in the model.
+	 * @param state the current state to begin planning from.
+	 * @return the class, for chaining method calls.
+	 */
+	public RLAgent plan(State state) {
+		return this;
+	}
 	
 	/**
 	 * Update the supervised learner with a new data point.
@@ -170,8 +154,9 @@ public abstract class RLAgent {
 	 * @param action the {@link Action} preformed.
 	 * @param newState the resultant state.
 	 * @param reward the reward received.
+	 * @return the class, for chaining method calls.
 	 */
-	public abstract void updateSupervisedLearner(State state, Action action, State newState, double reward);
+	public abstract RLAgent updateSupervisedLearner(State state, Action action, State newState, double reward);
 	
 	/**
 	 * Set the learner mode.
