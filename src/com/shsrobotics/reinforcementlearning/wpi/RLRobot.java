@@ -114,7 +114,7 @@ public abstract class RLRobot extends RobotBase {
 					learnerInit();
 					Architecture.start();
 				}
-			} else {
+			} else { // tele-op
 				if (currentMode == RobotMode.kTeleOperated) {
 					FRCControl.observeUserProgramTeleop();
 					teleoperatedPeriodic();
