@@ -7,7 +7,7 @@ import com.shsrobotics.reinforcementlearning.rl.RLAgent.State;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Test {
+public class DiscreteTest {
 	public static final String[] actionNames = {"Open new line"};
 	public static final String[] stateNames = {"Number of people in line"};	
 	public static final Map<String, Number> options = new HashMap<>();
@@ -24,7 +24,6 @@ public class Test {
 	
 	public static void main(String[] args) {
 		options.put("Accuracy", 0.85);
-		options.put("Exploration Rate", 1.0);
 		ranges.put("Minimum Action Values", minimumActionValues);
 		ranges.put("Maximum Action Values", maximumActionValues);
 		ranges.put("Minimum State Values", minimumStateValues);
@@ -52,7 +51,7 @@ public class Test {
 		
 		learner.setMode(RLAgent.Mode.kAct);
 		environment[0] = 05;
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 20; i++) {
 			State state = learner.new State(stateNames, environment);
 			double[] actionValues = learner.requestAction(state).get();
 			actionValues[0] = Math.round(actionValues[0]);
