@@ -36,15 +36,20 @@ public class KNNLearner extends SupervisedLearner {
 	/**
 	 * The new k nearest neighbors to use.
 	 * <p/>
-	 * @param k the new k
+	 * @param k the new k.
+	 * @return the class, for chaining method calls.
 	 */
-	public void setK(int k) {
+	public KNNLearner setK(int k) {
 		this.k = k;
+		
+		return this;
 	}
 
 	@Override
-	public void update(DataPoint dataPoint) {
+	public KNNLearner update(DataPoint dataPoint) {
 		data.add(dataPoint);
+		
+		return this;
 	}
 
 	@Override

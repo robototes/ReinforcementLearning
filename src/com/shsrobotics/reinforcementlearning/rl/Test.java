@@ -18,40 +18,28 @@ public class Test {
 	public static final double[] maximumStateValues = {20};
 	public static final double[] rewardRange = {-4, 10};
 	
-	public static ModelBasedLearner learner;
+	public ModelBasedLearner learner;
 	
-	static double[] environment = {0};
+	double[] environment = {0};
 	
 	public static void main(String[] args) {
 		options.put("Accuracy", 0.85);
 		options.put("Exploration Rate", 1.0);
+		options.put("Number of Bins", 20);
 		ranges.put("Minimum Action Values", minimumActionValues);
 		ranges.put("Maximum Action Values", maximumActionValues);
 		ranges.put("Minimum State Values", minimumStateValues);
 		ranges.put("Maximum State Values", maximumStateValues);
 		ranges.put("Reward Range", rewardRange);
 		
-		run();
+		new Test().test();
 	}
 	
-	public static void run() {
-		learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
-		learner.setMode(RLAgent.Mode.kLearn);
-		
-		for (int i = 0; i < 500; i++) {
-			environment[0]++;
-			checkEnvironment();
-			State state = learner.new State(stateNames, environment);
-			double[] actionValues = learner.requestAction(state).get();
-			actionValues[0] = Math.round(actionValues[0]);
-			Action action = learner.new Action(actionNames, actionValues);
-			double reward = requestReward(action);
-			State newState = learner.new State(stateNames, environment);
-			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
-		}
+	public void run() {
+		train();
 		
 		learner.setMode(RLAgent.Mode.kAct);
-		environment[0] = 05;
+		environment[0] = 07;
 		for (int i = 0; i < 10; i++) {
 			State state = learner.new State(stateNames, environment);
 			double[] actionValues = learner.requestAction(state).get();
@@ -67,8 +55,38 @@ public class Test {
 			environment[0]++;
 		}
 	}
+	
+	public void test() {
+		train();
+		
+		double[] actionValues = {1.0};
+		double[] stateValues = {10};
+		Prediction query = learner.queryModel(learner.new State(stateNames, stateValues), 
+			learner.new Action(actionNames, actionValues));
+		
+		System.out.println("R: " + query.reward);
+		System.out.println("S: " + query.state.get()[0]);
+		System.out.println();
+	}
+	
+	public void train() {
+		learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
+		learner.setMode(RLAgent.Mode.kLearn);
+		
+		for (int i = 0; i < 200; i++) {
+			environment[0]++;
+			checkEnvironment();
+			State state = learner.new State(stateNames, environment);
+			double[] actionValues = learner.requestAction(state).get();
+			actionValues[0] = Math.round(actionValues[0]);
+			Action action = learner.new Action(actionNames, actionValues);
+			double reward = requestReward(action);
+			State newState = learner.new State(stateNames, environment);
+			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
+		}
+	}
 
-	private static double requestReward(Action action) {
+	private double requestReward(Action action) {
 		boolean opened = (Math.round(action.get()[0]) == 1);
 		int people = (int) environment[0];
 		if (opened) {
@@ -90,7 +108,7 @@ public class Test {
 		}
 	}
 	
-	private static void checkEnvironment() {
+	private void checkEnvironment() {
 		if (environment[0] > 20) {
 			environment[0] = 20;
 		}

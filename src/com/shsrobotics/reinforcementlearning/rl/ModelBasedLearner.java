@@ -124,17 +124,19 @@ public class ModelBasedLearner extends RLAgent {
 			this.numberOfBins = 250;
 		}
 		
+		int accuracyIterations = (int) (1 / (1 - accuracy));
+		
 		double[] minimums = join(minimumStateValues, minimumActionValues);
 		double[] maximums = join(maximumStateValues, maximumActionValues);
 		inputKeys = join(stateNames, actionNames);
 		supervisedLearner = new KNNLearner[stateParameters + 1]; // placeholder
 		for (int i = 0; i < stateParameters; i++) { // fill array of learners
-			supervisedLearner[i] = new KNNLearner(minimums, maximums);
+			supervisedLearner[i] = new KNNLearner(minimums, maximums).setK(accuracyIterations);
 			stepSizes[i] = (maximumStateValues[i] - minimumStateValues[i]) / numberOfBins;
 		}
 		double[] rewardMin = {rewardArray[0]};
 		double[] rewardMax = {rewardArray[1]};
-		supervisedLearner[rewardModel] = new KNNLearner(rewardMin, rewardMax);		
+		supervisedLearner[rewardModel] = new KNNLearner(rewardMin, rewardMax).setK(accuracyIterations);		
 		stepSizes[rewardModel] = (rewardMin[0] - rewardMax[0]) / numberOfBins;
 		
 		QValues = new HashMap<>();
@@ -297,7 +299,7 @@ public class ModelBasedLearner extends RLAgent {
 	 * @return the discretized state.
 	 */
 	private State discretize(State state) {
-		double[] values = state.get();
+		double[] values = state.clone().get();
 		for (int i = 0; i < stateParameters; i++) {
 			int  count = (int ) (values[i] / stepSizes[i]);
 			values[i] = count * stepSizes[i];
@@ -308,7 +310,7 @@ public class ModelBasedLearner extends RLAgent {
 	/**
 	 * Stores the current state as well an action as well as the past {@code k} actions.
 	 */
-	public class StateActionHistory {
+	public class StateActionHistory implements Cloneable {
 		/**
 		 * The state.
 		 */
@@ -329,8 +331,8 @@ public class ModelBasedLearner extends RLAgent {
 		 * @param history the history of actions.
 		 */
 		public StateActionHistory(State state, Action action, ArrayList<Action> history) {
-			this.state = state;
-			this.action = action;
+			this.state = state.clone();
+			this.action = action.clone();
 			this.history = history;
 			this.history.trimToSize();
 		}
@@ -340,15 +342,26 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the state.
 		 */
 		public State getState() {
-			return state;
+			return state.clone();
 		}
-				
+			
+		/**
+		 * Push an action to the history.
+		 * @param newAction the action to add.
+		 * @return the class, for chaining method calls.
+		 */
+		public StateActionHistory addAction(Action newAction) {
+			history.add(0, newAction);
+			history.trimToSize();
+			return this;
+		}
+		
 		/**
 		 * Get the history.
 		 * @return the action history.
 		 */
 		public Action[] getHistory() {
-			return (Action[]) history.toArray();
+			return (Action[]) history.toArray().clone();
 		}
 		
 		/**
@@ -357,7 +370,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the action.
 		 */
 		public Action getActionAt(int iterationsBack) {
-			return history.get(iterationsBack);
+			return history.get(iterationsBack).clone();
 		}
 		
 		/**
@@ -365,14 +378,23 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the action.
 		 */
 		public Action getAction() {
-			return action;
+			return action.clone();
+		}
+		
+		@Override
+		public StateActionHistory clone() {
+			try {
+				return (StateActionHistory) super.clone();
+			} catch (CloneNotSupportedException ex) {
+				return null;
+			}
 		}
 	}
 	
 	/**
 	 * Stores the current state as well as the past {@code k} actions.
 	 */
-	public class StateHistory {
+	public class StateHistory implements Cloneable {
 		/**
 		 * The state.
 		 */
@@ -388,7 +410,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @param history
 		 */
 		public StateHistory(State state, ArrayList<Action> history) {
-			this.state = state;
+			this.state = state.clone();
 			this.history = history;
 			this.history.trimToSize();
 		}
@@ -398,7 +420,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the state.
 		 */
 		public State getState() {
-			return state;
+			return state.clone();
 		}
 		
 		/**
@@ -407,7 +429,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the class, for chaining method calls.
 		 */
 		public StateHistory setState(State newState) {
-			this.state = newState;
+			this.state = newState.clone();
 			return this;
 		}
 		
@@ -427,7 +449,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the action history.
 		 */
 		public Action[] getHistory() {
-			return (Action[]) history.toArray();
+			return (Action[]) history.toArray().clone();
 		}
 		
 		/**
@@ -436,7 +458,16 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the action.
 		 */
 		public Action getAction(int iterationsBack) {
-			return history.get(iterationsBack);
+			return history.get(iterationsBack).clone();
+		}
+		
+		@Override
+		public StateHistory clone() {
+			try {
+				return (StateHistory) super.clone();
+			} catch (CloneNotSupportedException ex) {
+				return null;
+			}
 		}
 	}
 	
@@ -459,7 +490,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @param reward the predicted reward.
 		 */
 		public Prediction(State state, double reward) {
-			this.state = state;
+			this.state = state.clone();
 			this.reward = reward;
 		}
 	}

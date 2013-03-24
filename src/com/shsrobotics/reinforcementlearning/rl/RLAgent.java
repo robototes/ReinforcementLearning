@@ -227,14 +227,15 @@ public abstract class RLAgent {
 	/**
 	 * Set of action parameters.
 	 */
-	public class Action extends DataPoint {
+	public class Action extends DataPoint implements Cloneable {
+		
 		/**
 		 * Create an action.
 		 * @param keys keys to represent action parameters.
 		 * @param values values for each parameter.
 		 */
 		public Action(String[] keys, double[] values) {
-			super(keys, values, false);
+			super(keys.clone(), values.clone(), false);
 			if (keys.length != actionParameters) {
 				throw new Error("Incorrect key length");
 			}
@@ -256,21 +257,30 @@ public abstract class RLAgent {
 		 * @return raw parameter values.
 		 */
 		public double[] get() {
-			return getOutputs();
+			return getOutputs().clone();
+		}
+		
+		@Override
+		public Action clone() {
+			try {
+				return (Action) super.clone();
+			} catch (CloneNotSupportedException ex) {
+				return null;
+			}
 		}
 	}
 	
 	/**
 	* Set of state parameters.
 	*/
-	public class State extends DataPoint {
+	public class State extends DataPoint implements Cloneable {
 		/**
 		 * Create a state.
 		 * @param keys keys to represent state parameters.
 		 * @param values values for each parameter.
 		 */
 		public State(String[] keys, double[] values) {
-			super(keys, values, true);
+			super(keys.clone(), values.clone(), true);
 			if (keys.length != stateParameters) {
 				throw new Error("Incorrect key length");
 			}
@@ -293,7 +303,16 @@ public abstract class RLAgent {
 		 * @return raw parameter values.
 		 */
 		public double[] get() {
-			return getInputs();
+			return getInputs().clone();
+		}
+		
+		@Override
+		public State clone() {
+			try {
+				return (State) super.clone();
+			} catch (CloneNotSupportedException ex) {
+				return null;
+			}
 		}
 	}
 

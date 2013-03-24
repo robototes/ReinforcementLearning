@@ -35,9 +35,10 @@ public abstract class SupervisedLearner {
 	
 	/**
 	 * Update the model with new experiences.
-	 * @param dataPoint the data point to add.
+	 * @param dataPoint the data point to add.	 * 
+	 * @return the class, for chaining method calls.
 	 */
-	public abstract void update(DataPoint dataPoint);
+	public abstract SupervisedLearner update(DataPoint dataPoint);
 	
 	/**
 	 * Query the learner for a prediction.
