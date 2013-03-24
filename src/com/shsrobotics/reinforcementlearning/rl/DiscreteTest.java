@@ -32,7 +32,7 @@ public class DiscreteTest {
 		ranges.put("Maximum State Values", maximumStateValues);
 		ranges.put("Reward Range", rewardRange);
 		
-		new DiscreteTest().test();
+		new DiscreteTest().run();
 	}
 	
 	public void run() {
@@ -59,8 +59,8 @@ public class DiscreteTest {
 	public void test() {
 		train();
 		
-		double[] actionValues = {1.0};
-		double[] stateValues = {10};
+		double[] actionValues = {0.0};
+		double[] stateValues = {11};
 		Prediction query = learner.queryModel(learner.new State(stateNames, stateValues), 
 			learner.new Action(actionNames, actionValues));
 		
