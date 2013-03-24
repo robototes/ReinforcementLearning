@@ -57,7 +57,7 @@ public class ModelBasedLearner extends RLAgent {
 	/**
 	 * Number of discrete values for each feature.
 	 */
-	private int numberOfBins = 250;
+	private int numberOfBins;
 	/**
 	 * Array of minimum step sizes for each feature, calculated 
 	 * from {@link #numberOfBins}.
@@ -82,8 +82,8 @@ public class ModelBasedLearner extends RLAgent {
 	
 	/**
 	 * Create a Model-Based Reinforcement Learning agent.
-	 * @param actionParameters see {@link #actionNames}
-	 * @param stateParameters see {@link #stateNames}
+	 * @param actions a list of action parameter names.
+	 * @param states a list of state parameter names.
 	 * @param ranges map of minimum and maximum arrays. Accepted keys are:
 	 *		<ul>
 	 *			<li>{@code "Minimum Action Values"}</li>
@@ -95,6 +95,7 @@ public class ModelBasedLearner extends RLAgent {
 	 * @param options map of agent options.  Options:
 	 *		<ul>
 	 *			<li>{@code "History Length"} -- {@link #historyLength}</li>
+	 *			<li>{@code "Number of Bins"} -- {@link #numberOfBins}</li>
 	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
@@ -116,6 +117,11 @@ public class ModelBasedLearner extends RLAgent {
 		this.historyLength = (Integer) options.get("History Length");
 		if (this.historyLength == null) {
 			this.historyLength = 0;
+		}
+		
+		this.numberOfBins = (Integer) options.get("Number of Bins");
+		if (this.historyLength == null) {
+			this.numberOfBins = 250;
 		}
 		
 		double[] minimums = join(minimumStateValues, minimumActionValues);
@@ -144,7 +150,7 @@ public class ModelBasedLearner extends RLAgent {
 	}
 	
 	@Override
-	public RLAgent plan(State state) {
+	public ModelBasedLearner plan(State state) {
 		UCTSearch(new StateHistory(state, history), 0);
 		
 		return this;
@@ -192,6 +198,8 @@ public class ModelBasedLearner extends RLAgent {
 	
 	/**
 	 * Lower the importance of the last planning rollout to allow for better exploration now.
+	 * 
+	 * @return the class, for chaining method calls.
 	 */
 	public ModelBasedLearner UCTReset() {
 		for (Map.Entry pair : s_Counts.entrySet()) {
@@ -223,7 +231,7 @@ public class ModelBasedLearner extends RLAgent {
 	}
 
 	@Override
-	public RLAgent updateSupervisedLearner(State state, Action action, State newState, double reward) {
+	public ModelBasedLearner updateSupervisedLearner(State state, Action action, State newState, double reward) {
 		history.add(0, action);
 		history.trimToSize();
 		
@@ -316,8 +324,9 @@ public class ModelBasedLearner extends RLAgent {
 		
 		/**
 		 * Create a State-history pair.
-		 * @param state
-		 * @param history
+		 * @param state the state.
+		 * @param action the action.
+		 * @param history the history of actions.
 		 */
 		public StateActionHistory(State state, Action action, ArrayList<Action> history) {
 			this.state = state;
@@ -485,8 +494,6 @@ public class ModelBasedLearner extends RLAgent {
 
 		/**
 		 * Create a {@link QMaximizer}.
-		 * @param minimums the minimum action values.
-		 * @param maximums the maximum action values.
 		 */
 		public QMaximizer () {
 			super(16, minimumActionValues, maximumActionValues);

@@ -68,8 +68,8 @@ public abstract class RLAgent {
 	
 	/**
 	 * Create an Reinforcement Learning agent.
-	 * @param actionParameters see {@link #actionNames}
-	 * @param stateParameters see {@link #stateNames}
+	 * @param actions a list of action parameter names.
+	 * @param states a list of state parameter names.
 	 * @param ranges map of minimum and maximum arrays. Accepted keys are:
 	 *		<ul>
 	 *			<li>{@code "Minimum Action Values"}</li>
