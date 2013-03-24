@@ -134,10 +134,8 @@ public class ModelBasedLearner extends RLAgent {
 			supervisedLearner[i] = new KNNLearner(minimums, maximums).setK(accuracyIterations);
 			stepSizes[i] = (maximumStateValues[i] - minimumStateValues[i]) / numberOfBins;
 		}
-		double[] rewardMin = {rewardArray[0]};
-		double[] rewardMax = {rewardArray[1]};
-		supervisedLearner[rewardModel] = new KNNLearner(rewardMin, rewardMax).setK(accuracyIterations);		
-		stepSizes[actionParameters] = (rewardMin[0] - rewardMax[0]) / numberOfBins;
+		supervisedLearner[rewardModel] = new KNNLearner(minimums, maximums).setK(accuracyIterations);		
+		stepSizes[actionParameters] = (rewardArray[1] - rewardArray[0]) / numberOfBins;
 		
 		QValues = new HashMap<>();
 		s_a_Counts = new HashMap<>();
@@ -589,5 +587,4 @@ public class ModelBasedLearner extends RLAgent {
 			return values;
 		}
 	}
-
 }
