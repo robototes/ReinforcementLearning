@@ -5,6 +5,7 @@ import com.shsrobotics.reinforcementlearning.rl.RLAgent.State;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class MountainCarTest {
@@ -14,14 +15,16 @@ public class MountainCarTest {
 	public static final Map<String, double[]> ranges = new HashMap<>();
 	public static final double[] minimumActionValues = {-1};
 	public static final double[] maximumActionValues = {1};
-	public static final double[] minimumStateValues = {-2, -2};
-	public static final double[] maximumStateValues = {2, 2};
+	public static final double[] minimumStateValues = {-10, -5};
+	public static final double[] maximumStateValues = {10, 1};
 	public static final double[] rewardRange = {-1, 1};
 	
 	public ModelBasedLearner learner;
 	
 	double V = 0;
 	double X = -0.5;
+	
+	double r = 0;
 	
 	boolean done = false;
 	Integer count = 0;
@@ -30,14 +33,14 @@ public class MountainCarTest {
 		
 	public static void main(String[] args) {
 		options.put("Accuracy", 0.9);
-		options.put("Number of Bins", 250);
+		options.put("Number of Bins", 100);
 		ranges.put("Minimum Action Values", minimumActionValues);
 		ranges.put("Maximum Action Values", maximumActionValues);
 		ranges.put("Minimum State Values", minimumStateValues);
 		ranges.put("Maximum State Values", maximumStateValues);
 		ranges.put("Reward Range", rewardRange);
 		
-		new MountainCarTest().train().generateCSV();
+		new MountainCarTest().train();
 	}
 	
 	public MountainCarTest run() {
@@ -59,9 +62,44 @@ public class MountainCarTest {
 	
 	public MountainCarTest train() {
 		learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
+		
+		learner.setMode(RLAgent.Mode.kWatch);
+		while (X > -0.65) {
+			double[] environment = {V, X};
+			State state = learner.new State(stateNames, environment);
+			double[] actionValues = {-1};
+			step(-1);
+			
+			double[] newEnvironment = {V, X};
+			State newState = learner.new State(stateNames, newEnvironment);
+			Action action = learner.new Action(actionNames, actionValues);
+			double reward = requestReward();
+			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
+		}
+		while (!done) {
+			double[] environment = {V, X};
+			State state = learner.new State(stateNames, environment);
+			double[] actionValues = {1};
+			step(1);
+			
+			double[] newEnvironment = {V, X};
+			State newState = learner.new State(stateNames, newEnvironment);
+			Action action = learner.new Action(actionNames, actionValues);
+			double reward = requestReward();
+			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
+		}
+		
+		done = false;
+		X = -0.5;
+		V = 0;
+		r = 0;
+		
+		generateCSV();
+		System.out.println("DONE");
+		
 		learner.setMode(RLAgent.Mode.kLearn);
 		
-		for (int i = 0; i < 1; i++) {
+		for (int i = 0; i < 5; i++) {
 			while(!done) {
 				double[] environment = {V, X};
 				State state = learner.new State(stateNames, environment);
@@ -73,7 +111,17 @@ public class MountainCarTest {
 				Action action = learner.new Action(actionNames, actionValues);
 				double reward = requestReward();
 				learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
+				
+				
 			}
+			System.out.println("DONE");
+			generateCSV();
+			
+			
+			r = 0;
+			V = 0;
+			X = -0.5;
+			done = false;
 		}		
 		
 		learner.setMode(RLAgent.Mode.kAct);
@@ -82,19 +130,20 @@ public class MountainCarTest {
 	}
 	
 	public void step(double P) {
-		double[] state = {V, X};
+		double[] state = {V, X, r};
 		history.put(count++, state);
 		
-		V = V + P * 0.001 + cos(3 * X) * -0.0025;
-		P += V;
+		V += P * 0.005 + cos(3 * X) * -0.0025;
+		X += V;
 	}
 	
 	public double requestReward() {
 		if (X < 0.6) {
+			r += -1;
 			return -1;
 		} else {
 			done = true;
-			return 1;
+			return 0;
 		}
 	}
 	
@@ -105,19 +154,22 @@ public class MountainCarTest {
 	private void generateCSV()
 	{
 		try {
-			try (FileWriter writer = new FileWriter("C:\\users\\Cory\\Documents\\test.csv")) {
-				int length = history.size();
-				for (int i = 0; i < length; i++) {
-					writer.append(Double.toString(V));
+			try (FileWriter writer = new FileWriter("C:\\Users\\Cory McCartan\\Documents\\test.csv")) {
+				Iterator it = history.keySet().iterator();
+				while (it.hasNext()) {					
+					double[] state = history.get((Integer) it.next());
+					writer.append(Double.toString(state[0]));
 					writer.append(",");
-					writer.append(Double.toString(X));
+					writer.append(Double.toString(state[1]));
+					writer.append(",");
+					writer.append(Double.toString(state[2]));
 					writer.append("\n");
 				}
-
+				
 				writer.flush();
 			}
 		 } catch(IOException e) {
-			  e.printStackTrace();
-		 } 
+			 System.out.println("Please close any process that is using this file.");
+		 }
     }
 }
