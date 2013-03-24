@@ -7,7 +7,7 @@ import com.shsrobotics.reinforcementlearning.rl.RLAgent.State;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Test {
+public class DiscreteTest {
 	public static final String[] actionNames = {"Open new line"};
 	public static final String[] stateNames = {"Number of people in line"};	
 	public static final Map<String, Number> options = new HashMap<>();
@@ -32,7 +32,7 @@ public class Test {
 		ranges.put("Maximum State Values", maximumStateValues);
 		ranges.put("Reward Range", rewardRange);
 		
-		new Test().test();
+		new DiscreteTest().test();
 	}
 	
 	public void run() {
@@ -84,6 +84,8 @@ public class Test {
 			State newState = learner.new State(stateNames, environment);
 			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
 		}
+		
+		learner.setMode(RLAgent.Mode.kAct);
 	}
 
 	private double requestReward(Action action) {

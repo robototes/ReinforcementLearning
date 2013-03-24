@@ -137,7 +137,7 @@ public class ModelBasedLearner extends RLAgent {
 		double[] rewardMin = {rewardArray[0]};
 		double[] rewardMax = {rewardArray[1]};
 		supervisedLearner[rewardModel] = new KNNLearner(rewardMin, rewardMax).setK(accuracyIterations);		
-		stepSizes[rewardModel] = (rewardMin[0] - rewardMax[0]) / numberOfBins;
+		stepSizes[actionParameters] = (rewardMin[0] - rewardMax[0]) / numberOfBins;
 		
 		QValues = new HashMap<>();
 		s_a_Counts = new HashMap<>();
