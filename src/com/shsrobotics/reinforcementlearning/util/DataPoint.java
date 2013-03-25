@@ -184,17 +184,27 @@ public class DataPoint {
 	public double getOutput() {
 		return output[0];
 	}
+	
 	/**
 	 * Finds the value from an array of string keys
 	 * <p/>
 	 * @param value the value to look for.
 	 */
 	private int indexOf(String value) {
-		for (int i = 0; i < inputKeys.length; i++) {
-			if (value.equals(inputKeys[i])) { // found
-				return i;
+		if (inputKeys != null) {
+			for (int i = 0; i < inputKeys.length; i++) {
+				if (value.equals(inputKeys[i])) { // found
+					return i;
+				}
 			}
+			return -1; // not found
+		} else {
+			for (int i = 0; i < outputKeys.length; i++) {
+				if (value.equals(outputKeys[i])) { // found
+					return i;
+				}
+			}
+			return -1; // not found
 		}
-		return -1; // not found
 	}
 }

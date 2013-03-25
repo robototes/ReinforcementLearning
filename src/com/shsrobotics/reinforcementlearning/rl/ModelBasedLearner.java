@@ -27,6 +27,10 @@ public class ModelBasedLearner extends RLAgent {
 	 * The current maximum sample return encountered.
 	 */
 	private double maximumSampleReturn = 0;
+	/**
+	 * For UCT λ-returns.
+	 */
+	private Double λ;
 	
 	/**
 	 * Q-Values for each state-action-history pair.
@@ -57,7 +61,7 @@ public class ModelBasedLearner extends RLAgent {
 	/**
 	 * Number of discrete values for each feature.
 	 */
-	private int numberOfBins;
+	private Integer numberOfBins;
 	/**
 	 * Array of minimum step sizes for each feature, calculated 
 	 * from {@link #numberOfBins}.
@@ -96,6 +100,7 @@ public class ModelBasedLearner extends RLAgent {
 	 *		<ul>
 	 *			<li>{@code "History Length"} -- {@link #historyLength}</li>
 	 *			<li>{@code "Number of Bins"} -- {@link #numberOfBins}</li>
+	 *			<li>{@code "λ"} -- {@link #λ}</li>
 	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
@@ -105,9 +110,6 @@ public class ModelBasedLearner extends RLAgent {
 		super(actions, states, ranges, options);
 		
 		rewardModel = stateParameters;
-		
-		stepSizes = new double[actionParameters + 1];
-		qMaximizer = new QMaximizer();
 		
 		double[] rewardArray = ranges.get("Reward Range");
 		if (rewardArray == null) {
@@ -120,9 +122,18 @@ public class ModelBasedLearner extends RLAgent {
 		}
 		
 		this.numberOfBins = (Integer) options.get("Number of Bins");
-		if (this.historyLength == null) {
+		if (this.numberOfBins == null) {
 			this.numberOfBins = 250;
 		}
+		
+		this.λ = (Double) options.get("λ");
+		if (this.λ == null) {
+			this.λ = 0.05;
+		}
+		
+		stepSizes = new double[actionParameters + 1];
+		qMaximizer = new QMaximizer();
+		
 		
 		int accuracyIterations = (int) (1 / (1 - accuracy));
 		
@@ -173,7 +184,7 @@ public class ModelBasedLearner extends RLAgent {
 		qMaximizer.setState(discretized);
 		
 		Action bestAction = new Action(actionNames, qMaximizer.maximize()); // find best action		
-		Prediction prediction = queryModel(discretized, bestAction); // predict new state and reward
+		Prediction prediction = queryModel(state, bestAction); // predict new state and reward
 		//update history and make recursive method call
 		stateHistory.addAction(bestAction).setState(prediction.state);
 		double sampleReturn = prediction.reward + discountFactor * UCTSearch(stateHistory, depth + 1); // recursive search
@@ -183,17 +194,17 @@ public class ModelBasedLearner extends RLAgent {
 		
 		Integer s_Count = s_Counts.get(stateHistory);
 		Integer s_a_Count = s_a_Counts.get(stateActionHistory);
-		if (s_Count == null) s_Count = 0;
-		if (s_a_Count == null) s_a_Count = 0;
+		if (s_Count == null) s_Count = 1;
+		if (s_a_Count == null) s_a_Count = 1;
 		
 		s_Counts.put(stateHistory, s_Count + 1);
 		s_a_Counts.put(stateActionHistory, s_a_Count + 1);
 		//update Q
-		double newQ = learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(bestAction.get());
+		double newQ = prediction.reward; //learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(bestAction.get());
 		QValues.put(stateActionHistory, newQ);
 		
 		qMaximizer.setMode(QMaximizer.kActionMaximize);
-		return learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(qMaximizer.maximize());
+		return λ * sampleReturn + (1 - λ) * qMaximizer.f(qMaximizer.maximize());
 	}
 	
 	/**
@@ -553,13 +564,14 @@ public class ModelBasedLearner extends RLAgent {
 		}
 
 		@Override
-		public double f(double[] input) { // input is action values
+		public double f(double[] input) { // input is state and action values
 			StateHistory stateHistory = new StateHistory(environment, history);
 			StateActionHistory stateActionHistory = new StateActionHistory(environment, 
 				new Action(actionNames, input), history);
 			double toReturn = 0;
 			Double qValue = QValues.get(stateActionHistory);
 			if (qValue == null) qValue = 0.0;
+				if (true) return qValue;
 			if (currentMode == kUCTMaximize) {
 				Integer s_Count = s_Counts.get(stateHistory);
 				Integer s_a_Count = s_a_Counts.get(stateActionHistory);
@@ -573,18 +585,5 @@ public class ModelBasedLearner extends RLAgent {
 			return toReturn;
 		}
 
-		/**
-		 * Discretize an action into {@link #numberOfBins} parts.
-		 * @param action the action.
-		 * @return the discretized action.
-		 */
-		private double[] discretize(double[] action) {
-			double[] values = action.clone();
-			for (int i = 0; i < actionParameters; i++) {
-				int  count = (int ) (values[i] / stepSizes[i]);
-				values[i] = count * stepSizes[i];
-			}
-			return values;
-		}
 	}
 }

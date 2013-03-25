@@ -93,13 +93,13 @@ public abstract class RLAgent {
 		if (options.containsKey("Learning Rate")) {
 			this.learningRate = (double) options.get("Learning Rate");
 		} else {
-			this.learningRate = 0.2; // default
+			this.learningRate = 0.3; // default
 		}
 		
 		if (options.containsKey("Discount Factor")) {
 			this.discountFactor = (double) options.get("Discount Factor");
 		} else {
-			this.discountFactor = 0.4; // default
+			this.discountFactor = 0.99; // default
 		}
 		
 		if (options.containsKey("Accuracy")) {

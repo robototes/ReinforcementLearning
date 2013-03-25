@@ -3,7 +3,7 @@
     <description>Builds, tests, and runs the project ReinforcementLearning.</description>
     <import file="nbproject/build-impl.xml"/>
 	<target description="Bundle sources in a jar" name="package-sources">
-		<jar basedir="src" destfile="dist/com.shsrobotics.reinforcmentlearning-src.jar"/>
+		<jar basedir="src" destfile="dist/rl-src.jar"/>
 	</target>
 	<target name="-post-jar" depends="package-sources">
 		<copy overwrite="true" tofile="${dist.dir}/README.TXT" file="${basedir}/LGPL_for_Code.txt" /> 
