@@ -5,7 +5,21 @@
 	<target description="Bundle sources in a jar" name="package-sources">
 		<jar basedir="src" destfile="dist/rl-src.jar"/>
 	</target>
-	<target name="-post-jar" depends="package-sources">
+	<target name="signjar">
+	   <echo message="Signing ${dist.dir}/rl.jar ..."/>
+	   <exec dir="${work.dir}" executable="jarsigner">
+		 <arg value="-verbose" />
+		 <arg value="-keystore" />
+		 <arg value="keystore.jks" />
+		 <arg value="-storepass" />
+		 <arg value="team2412" />
+		 <arg value="-keypass" />
+		 <arg value="robototes" />
+		 <arg value="${dist.dir}/rl.jar" />
+		 <arg value="selfsigned" />
+	   </exec>
+	</target>
+	<target name="-post-jar" depends="package-sources, signjar">
 		<copy overwrite="true" tofile="${dist.dir}/README.TXT" file="${basedir}/LGPL_for_Code.txt" /> 
 	</target>
 </project>

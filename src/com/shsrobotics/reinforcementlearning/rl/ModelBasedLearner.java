@@ -16,6 +16,7 @@ import java.util.Map;
  * Aug. 2010. Web. 13 Mar. 2013. 
  * <a href="http://www.cs.utexas.edu/users/ai-lab/pubs/todd-thesis.pdf">&lt;http://www.cs.utexas.edu/users/ai-lab/pubs/todd-thesis.pdf&gt;</a>.
  */
+@SuppressWarnings("unchecked")
 public class ModelBasedLearner extends RLAgent {
 
 	/**
@@ -200,7 +201,7 @@ public class ModelBasedLearner extends RLAgent {
 		s_Counts.put(stateHistory, s_Count + 1);
 		s_a_Counts.put(stateActionHistory, s_a_Count + 1);
 		//update Q
-		double newQ = prediction.reward; //learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(bestAction.get());
+		double newQ = learningRate * sampleReturn + (1 - learningRate) * qMaximizer.f(bestAction.get());
 		QValues.put(stateActionHistory, newQ);
 		
 		qMaximizer.setMode(QMaximizer.kActionMaximize);

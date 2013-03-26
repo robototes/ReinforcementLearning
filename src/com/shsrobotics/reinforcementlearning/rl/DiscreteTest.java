@@ -8,15 +8,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DiscreteTest {
-	public static final String[] actionNames = {"Open new line"};
-	public static final String[] stateNames = {"Number of people in line"};	
+	protected static final String[] actionNames = {"Open new line"};
+	protected static final String[] stateNames = {"Number of people in line"};	
 	public static final Map<String, Number> options = new HashMap<>();
 	public static final Map<String, double[]> ranges = new HashMap<>();
-	public static final double[] minimumActionValues = {0};
-	public static final double[] maximumActionValues = {1};
-	public static final double[] minimumStateValues = {0};
-	public static final double[] maximumStateValues = {20};
-	public static final double[] rewardRange = {-4, 10};
+	protected static final double[] minimumActionValues = {0};
+	protected static final double[] maximumActionValues = {1};
+	protected static final double[] minimumStateValues = {0};
+	protected static final double[] maximumStateValues = {20};
+	protected static final double[] rewardRange = {-4, 10};
 	
 	public ModelBasedLearner learner;
 	
@@ -65,7 +65,7 @@ public class DiscreteTest {
 		Action action = learner.requestAction(state);
 		Prediction query = learner.queryModel(state, action);
 		
-		System.out.println("A: " + action.getActionParameter("Open new line"));
+		System.out.println("A: " + ((Math.round(action.getActionParameter("Open new line")) == 1) ? "Yes" : "No"));
 		System.out.println("R: " + query.reward);
 		System.out.println("S: " + query.state.get()[0]);
 		System.out.println();
@@ -84,7 +84,7 @@ public class DiscreteTest {
 			Action action = learner.new Action(actionNames, actionValues);
 			double reward = requestReward(action);
 			State newState = learner.new State(stateNames, environment);
-			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
+			learner.updateSupervisedLearner(state, action, newState, reward).plan(state).plan(state);
 		}
 		
 		learner.setMode(RLAgent.Mode.kAct);
