@@ -3,12 +3,16 @@ package com.shsrobotics.reinforcementlearning.wpi;
 import com.shsrobotics.reinforcementlearning.architecture.Architecture;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.communication.FRCControl;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 /**
  * A robot that runs Team 2412's Reinforcement Learning architecture.
  * <p/>
  * The robot learns over time how to act, by receiving rewards for actions it takes.  The algorithm attempts to maximize
- * reward over the long run by choosing actions now.
+ * reward over the long set by choosing actions now.
  * <p?
  * <b>IMPORTANT NOTE</b><br />
  * Test mode runs the robot in RL mode, as does autonomous mode.
@@ -19,11 +23,34 @@ public abstract class RLRobot extends RobotBase {
 
 	private RobotMode currentMode;
 	
+	private ArrayList<Double> actionMinimums = new ArrayList<>();
+	private ArrayList<Double> actionMaximums = new ArrayList<>();
+	private ArrayList<Double> stateMinimums = new ArrayList<>();
+	private ArrayList<Double> stateMaximums = new ArrayList<>();
+	private ArrayList<Method> stateGets = new ArrayList<>();
+	private ArrayList<Method> actionSets = new ArrayList<>();
+	
 	/**
 	 * Create an {@link RL Robot}. 
 	 */
 	public RLRobot() {
 		currentMode = RLRobot.RobotMode.kDisabled;
+		
+		try {
+			for (Field f : RLRobot.class.getDeclaredFields()) {
+				if (f.isAnnotationPresent(RLInput.class)) {
+					RLInput annotation = f.getAnnotation(RLInput.class);
+					stateMinimums.add(annotation.minimum());
+					stateMaximums.add(annotation.maximum());
+					stateGets.add(f.getType().getMethod(annotation.get(), (Class<?>[]) null));
+				} else if (f.isAnnotationPresent(RLOutput.class)) {
+					RLOutput annotation = f.getAnnotation(RLOutput.class);
+					actionMinimums.add(annotation.minimum());
+					actionMaximums.add(annotation.maximum());
+					actionSets.add(f.getType().getMethod(annotation.set(), (Class<?>[]) null));
+				}
+			}
+		} catch (NoSuchMethodException | SecurityException ex) { }
 	}
 	
 	/**
@@ -53,7 +80,7 @@ public abstract class RLRobot extends RobotBase {
 	}
 	
 	/**
-     * Code to run while the robot is disabled should go here.
+     * Code to set while the robot is disabled should go here.
      *
      * This code which will be called continuously while the robot is in {@link RobotMode#kDisabled} mode.
      */
@@ -124,6 +151,27 @@ public abstract class RLRobot extends RobotBase {
 				}
 			}
 		}
+	}
+
+	private double[] getState() {
+		int length = stateGets.size();
+		double[] values = new double[length];
+		try {
+			for (int parameter = 0; parameter < length; parameter++) {
+				values[parameter] = (double) stateGets.get(parameter).invoke(null, (Object) null);
+			}
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) { }
+		
+		return values;
+	}
+	
+	private void setAction(double[] values) {
+		int length = actionSets.size();
+		try {
+			for (int parameter = 0; parameter < length; parameter++) {
+				actionSets.get(parameter).invoke(null, values[parameter]);
+			}
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) { }
 	}
 	
 	/**
