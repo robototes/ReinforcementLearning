@@ -53,11 +53,11 @@ public class ModelBasedLearner extends RLAgent {
 	/**
 	 * Maximum UCT Search depth.
 	 */
-	private int maxDepth = 8;
+	private int maxDepth = 6;
 	/**
 	 * The number of previous actions to keep in the history.
 	 */
-	private Integer historyLength = 0; // Integer to avoid null pointer
+	private Integer historyLength; // Integer to avoid null pointer
 	
 	/**
 	 * Number of discrete values for each feature.
@@ -190,7 +190,7 @@ public class ModelBasedLearner extends RLAgent {
 		stateHistory.addAction(bestAction).setState(prediction.state);
 		double sampleReturn = prediction.reward + discountFactor * UCTSearch(stateHistory, depth + 1); // recursive search
 		maximumSampleReturn = Math.max(sampleReturn, maximumSampleReturn); // update maximum sample return
-		//update counts
+		//update counts					
 		StateActionHistory stateActionHistory = new StateActionHistory(prediction.state, bestAction, history);
 		
 		Integer s_Count = s_Counts.get(stateHistory);
@@ -205,7 +205,8 @@ public class ModelBasedLearner extends RLAgent {
 		QValues.put(stateActionHistory, newQ);
 		
 		qMaximizer.setMode(QMaximizer.kActionMaximize);
-		return λ * sampleReturn + (1 - λ) * qMaximizer.f(qMaximizer.maximize());
+		double bestQ = qMaximizer.f(qMaximizer.maximize());
+		return λ * sampleReturn + (1 - λ) * Math.max(bestQ, newQ);
 	}
 	
 	/**
@@ -215,10 +216,10 @@ public class ModelBasedLearner extends RLAgent {
 	 */
 	public ModelBasedLearner UCTReset() {
 		for (Map.Entry pair : s_Counts.entrySet()) {
-			pair.setValue((Integer) pair.getValue() / 2);
+			pair.setValue((int) Math.sqrt( ((Integer) pair.getValue()).doubleValue() ));
 		}
 		for (Map.Entry pair : s_a_Counts.entrySet()) {
-			pair.setValue((Integer) pair.getValue() / 2);
+			pair.setValue((int) Math.sqrt( ((Integer) pair.getValue()).doubleValue() ));
 		}
 		return this;
 	}
@@ -262,6 +263,7 @@ public class ModelBasedLearner extends RLAgent {
 		}
 		supervisedLearner[rewardModel].update(new DataPoint(input, reward)); // reward model	
 		
+		UCTReset();
 		return this;
 	}
 	

@@ -25,7 +25,7 @@ public class DiscreteTest {
 	public static void main(String[] args) {
 		options.put("Accuracy", 0.85);
 		options.put("Exploration Rate", 1.0);
-		options.put("Number of Bins", 20);
+		options.put("Number of Bins", 200);
 		ranges.put("Minimum Action Values", minimumActionValues);
 		ranges.put("Maximum Action Values", maximumActionValues);
 		ranges.put("Minimum State Values", minimumStateValues);
@@ -59,7 +59,6 @@ public class DiscreteTest {
 	public void test() {
 		train();
 		
-		double[] actionValues = {0.0};
 		double[] stateValues = {11};
 		State state = learner.new State(stateNames, stateValues);
 		Action action = learner.requestAction(state);
@@ -75,7 +74,7 @@ public class DiscreteTest {
 		learner = new ModelBasedLearner(actionNames, stateNames, ranges, options);
 		learner.setMode(RLAgent.Mode.kLearn);
 		
-		for (int i = 0; i < 200; i++) {
+		for (int i = 0; i < 500; i++) {
 			environment[0]++;
 			checkEnvironment();
 			State state = learner.new State(stateNames, environment);
@@ -84,7 +83,7 @@ public class DiscreteTest {
 			Action action = learner.new Action(actionNames, actionValues);
 			double reward = requestReward(action);
 			State newState = learner.new State(stateNames, environment);
-			learner.updateSupervisedLearner(state, action, newState, reward).plan(state).plan(state);
+			learner.updateSupervisedLearner(state, action, newState, reward).plan(state);
 		}
 		
 		learner.setMode(RLAgent.Mode.kAct);
@@ -114,7 +113,7 @@ public class DiscreteTest {
 	
 	private void checkEnvironment() {
 		if (environment[0] > 20) {
-			environment[0] = 20;
+			environment[0] = 1;
 		}
 		if (environment[0] < 0) {
 			environment[0] = 0;

@@ -20,9 +20,13 @@ public abstract class RLAgent {
 	protected double discountFactor;
 	
 	/**
-	 * Learning rate of the learner.
+	 * Learning rate of the learner, saved over time.
 	 */
-	protected double learningRate;
+	private double defaultLearningRate;
+	/**
+	 * Learning rate of the learner, updated depending on the learner's current mode.
+	 */
+	protected double learningRate; 
 	
 	/**
 	 * Learner accuracy.
@@ -79,7 +83,7 @@ public abstract class RLAgent {
 	 *		</ul>
 	 * @param options map of agent options.  Options:
 	 *		<ul>
-	 *			<li>{@code "Learning Rate"} -- {@link #learningRate}</li>
+	 *			<li>{@code "Learning Rate"} -- {@link #defaultLearningRate}</li>
 	 *			<li>{@code "Discount Factor"} -- {@link #discountFactor}</li>
 	 *			<li>{@code "Accuracy"} -- {@link #accuracy}</li>
 	 *		</ul>
@@ -127,6 +131,12 @@ public abstract class RLAgent {
 	public final Action requestAction(State state) {
         if (!currentMode.allowActionRequests || !currentMode.enabled) {
             throw new Error("Wrong learning mode.");
+		}
+		
+		if (currentMode.chooseBestOption) {
+			learningRate = 0.05 * defaultLearningRate;
+		} else {
+			learningRate = defaultLearningRate;
 		}
 		
 		return new Action(actionNames, query(state));
