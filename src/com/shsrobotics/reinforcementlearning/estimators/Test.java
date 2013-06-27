@@ -9,34 +9,26 @@ public class Test {
 	 * @param args the command line arguments
 	 */
 	public static void main(String[] args) {
-		int n = 150;
+		int n = 250;
+		
 		DataPoint[] data = new DataPoint[n];
-		String[] inputKeys = {"A", "B"};
+		String[] inputKeys = {"A"};
 		String[] outputKeys = {"Z"};
 		double[] minimums = {0, 0};
 		double[] maximums = {1, 20};
 		for (int i = 0; i < n; i++) {
-			double randA = Math.round(Math.random() * 20);
-			double randB = Math.round(Math.random());
-			double[] input = {randA, randB};
+			double randA = Math.random();
+			double[] input = {randA};
 			double z;
-			if (randB == 1) {
-				if (randA > 10) {
-					z = 10;
-				} else {
-					z = -1;
-				}
+			if (randA >= 0.2) {
+				z = 1;
 			} else {
-				if (randA > 10) {
-					z = -4;
-				} else {
-					z = 0;
-				}
+				z = 0;
 			}
 			double[] output = {z};
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}		
-		double[] input = {5, 0};
+		double[] input = {0.55};
 		//*
 		RandomForestQEstimator forest = new RandomForestQEstimator(5, minimums, maximums, 4);
 		forest.addInitialData(data);
