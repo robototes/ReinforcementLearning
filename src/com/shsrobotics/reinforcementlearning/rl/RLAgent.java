@@ -272,11 +272,7 @@ public abstract class RLAgent {
 		
 		@Override
 		public Action clone() {
-			try {
-				return (Action) super.clone();
-			} catch (CloneNotSupportedException ex) {
-				return null;
-			}
+			return (Action) super.clone();
 		}
 	}
 	
@@ -318,11 +314,7 @@ public abstract class RLAgent {
 		
 		@Override
 		public State clone() {
-			try {
-				return (State) super.clone();
-			} catch (CloneNotSupportedException ex) {
-				return null;
-			}
+			return (State) super.clone();
 		}
 	}
 

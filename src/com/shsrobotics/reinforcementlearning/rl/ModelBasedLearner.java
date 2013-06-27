@@ -23,6 +23,10 @@ public class ModelBasedLearner extends RLAgent {
 	 * The index of the reward model.
 	 */
 	private int rewardModel;
+	/**
+	 * The index in {@link #stepSizes} that represents the reward step size.
+	 */
+	private int rewardStep;
 	
 	/**
 	 * The current maximum sample return encountered.
@@ -111,6 +115,7 @@ public class ModelBasedLearner extends RLAgent {
 		super(actions, states, ranges, options);
 		
 		rewardModel = stateParameters;
+		rewardStep = stateParameters + actionParameters;
 		
 		double[] rewardArray = ranges.get("Reward Range");
 		if (rewardArray == null) {
@@ -132,7 +137,7 @@ public class ModelBasedLearner extends RLAgent {
 			this.λ = 0.05;
 		}
 		
-		stepSizes = new double[actionParameters + 1];
+		stepSizes = new double[rewardStep + 1];
 		qMaximizer = new QMaximizer();
 		
 		
@@ -146,8 +151,12 @@ public class ModelBasedLearner extends RLAgent {
 			supervisedLearner[i] = new KNNLearner(minimums, maximums).setK(accuracyIterations);
 			stepSizes[i] = (maximumStateValues[i] - minimumStateValues[i]) / numberOfBins;
 		}
+		for (int i = 0; i < actionParameters; i++) { // get action step sizes
+			int equivalentIndex = i + stateParameters;
+			stepSizes[equivalentIndex] = (maximumActionValues[i] - minimumActionValues[i]) / numberOfBins;
+		}
 		supervisedLearner[rewardModel] = new KNNLearner(minimums, maximums).setK(accuracyIterations);		
-		stepSizes[actionParameters] = (rewardArray[1] - rewardArray[0]) / numberOfBins;
+		stepSizes[rewardStep] = (rewardArray[1] - rewardArray[0]) / numberOfBins;
 		
 		QValues = new HashMap<>();
 		s_a_Counts = new HashMap<>();
@@ -307,7 +316,7 @@ public class ModelBasedLearner extends RLAgent {
 	
 	/**
 	 * Discretize a state into {@link #numberOfBins} parts.
-	 * @param action the state.
+	 * @param state the state.
 	 * @return the discretized state.
 	 */
 	private State discretize(State state) {
@@ -317,6 +326,21 @@ public class ModelBasedLearner extends RLAgent {
 			values[i] = count * stepSizes[i];
 		}
 		return new State(stateNames, values);
+	}
+	
+	/**
+	 * Discretize a state into {@link #numberOfBins} parts.
+	 * @param action the state.
+	 * @return the discretized state.
+	 */
+	private Action discretize(Action action) {
+		double[] values = action.clone().get();
+		for (int i = 0; i < actionParameters; i++) {
+			int equivalentIndex = i + stateParameters;
+			int  count = (int) (values[i] / stepSizes[equivalentIndex]);
+			values[i] = count * stepSizes[i];
+		}
+		return new Action(actionNames, values);
 	}
 	
 	/**
@@ -540,10 +564,6 @@ public class ModelBasedLearner extends RLAgent {
 		 */
 		public QMaximizer () {
 			super(16, minimumActionValues, maximumActionValues);
-			
-			for (int i = 0; i <= actionParameters; i++) { // calculate step sizes
-				stepSizes[i] = (maximums[i] - minimums[i]) / numberOfBins;
-			}
 		}
 
 		/**
@@ -552,7 +572,7 @@ public class ModelBasedLearner extends RLAgent {
 		 * @return the class, for chaining method calls.
 		 */
 		public QMaximizer setState(State state) {
-			this.environment = state;
+			this.environment = discretize(state);
 			return this;
 		}
 		
@@ -568,9 +588,10 @@ public class ModelBasedLearner extends RLAgent {
 
 		@Override
 		public double f(double[] input) { // input is state and action values
+			Action inputAction = discretize(new Action(actionNames, input));
 			StateHistory stateHistory = new StateHistory(environment, history);
 			StateActionHistory stateActionHistory = new StateActionHistory(environment, 
-				new Action(actionNames, input), history);
+				inputAction, history);
 			double toReturn = 0;
 			Double qValue = QValues.get(stateActionHistory);
 			if (qValue == null) qValue = 0.0;

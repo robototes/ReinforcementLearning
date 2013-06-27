@@ -6,7 +6,7 @@ package com.shsrobotics.reinforcementlearning.util;
  * <p/>
  * @author Team 2412.
  */
-public class DataPoint {
+public class DataPoint implements Cloneable{
 
 	/**
 	 * A list of input keys.
@@ -205,6 +205,15 @@ public class DataPoint {
 				}
 			}
 			return -1; // not found
+		}
+	}
+	
+	@Override
+	public DataPoint clone() {
+		try {
+			return (DataPoint) super.clone();
+		} catch (CloneNotSupportedException ex) {
+			return null;
 		}
 	}
 }
