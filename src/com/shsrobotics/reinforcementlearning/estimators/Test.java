@@ -28,11 +28,13 @@ public class Test {
 			double[] output = {z};
 			data[i] = new DataPoint(inputKeys, input, outputKeys, output);
 		}		
-		double[] input = {0.55};
+		double[] input = {0.95};
+		double[] input2 = {0.05};
 		//*
-		RandomForestQEstimator forest = new RandomForestQEstimator(5, minimums, maximums, 4);
+		RandomForest forest = new RandomForest(64, minimums, maximums, 8);
 		forest.addInitialData(data);
 		System.out.println("output: " + forest.run(input));
+		System.out.println("output: " + forest.run(input2));
 		/*/
 		RandomDecisionTree tree = new RandomDecisionTree(data, 2, minimums, maximums, 4);
 		System.out.println("outupt: " + tree.run(input));

@@ -9,7 +9,7 @@ import com.shsrobotics.reinforcementlearning.util.RandomDecisionTree;
  * <p/>
  * @author Team 2412.
  */
-public class RandomForestQEstimator {
+public class RandomForest {
 
 	/**
 	 * The actual random forest.
@@ -30,13 +30,18 @@ public class RandomForestQEstimator {
 	 * The maximum depth of each tree.
 	 */
 	private int maxDepth;
+	
+	/**
+	 * The probability of adding a given data point to a tree.
+	 */
+	private double w = 0.4;
 
 	/**
 	 * Create a Random Forest machine learner to estimate values.
 	 * <p/>
 	 * @param trees the number of trees in the forest.
 	 */
-	public RandomForestQEstimator(int trees, double[] minimums, double[] maximums, int maxDepth) {
+	public RandomForest(int trees, double[] minimums, double[] maximums, int maxDepth) {
 		this.forest = new RandomDecisionTree[trees];
 		this.maxDepth = maxDepth;
 		this.minimums = minimums;
@@ -48,13 +53,12 @@ public class RandomForestQEstimator {
 	 * There should be at least twenty examples per variable in the set.
 	 * <p/>
 	 * @param sample the sample to use to train the trees in the forest.
-	 * @return array of variable importance.
 	 */
 	public void addInitialData(DataPoint[] data) {
 		int sampleSize = data.length;
 		int variableSize = minimums.length;
 		int numberOfTrees = forest.length;
-		int subsetSize = (int) Math.ceil((double) variableSize / 3);
+		int subsetSize = (int) Math.ceil(variableSize * w);
 		if (subsetSize > variableSize) { // happens
 			subsetSize = variableSize;
 		}
