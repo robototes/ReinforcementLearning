@@ -6,7 +6,7 @@ import com.shsrobotics.reinforcementlearning.util.DataPoint;
  * For use in {@link RandomDecisionTree}. Minimizes entropy by changing split
  * parameters.
  */
-public class VarianceMinimizer extends Optimizer {
+public class VarianceMinimizer extends DefaultOptimizer {
 
 	/**
 	 * Current data to use in minimization.
